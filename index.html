@@ -209,9 +209,37 @@
                 font-size: 2.5rem;
             }
         }
+
+        /* 音乐控制器样式 */
+        .music-control {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            cursor: pointer;
+            z-index: 999;
+        }
     </style>
 </head>
 <body>
+
+    <!-- ====================================== -->
+    <!--            背景音乐 自动播放            -->
+    <!-- ====================================== -->
+    <audio id="bgm" loop autoplay preload="auto">
+        <source src="./music/nanndemonaiya.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- 音乐播放/暂停按钮 -->
+    <div class="music-control" onclick="toggleMusic()">🎵</div>
+
     <!-- 顶部全屏Banner -->
     <div class="hero-banner">
         <div class="hero-content">
@@ -280,5 +308,22 @@
             </div>
         </div>
     </div>
+
+    <script>
+        // 音乐播放/暂停
+        var bgm = document.getElementById('bgm');
+        function toggleMusic() {
+            if (bgm.paused) {
+                bgm.play();
+            } else {
+                bgm.pause();
+            }
+        }
+
+        // 页面加载后自动播放
+        window.addEventListener('load', function() {
+            bgm.play().catch(e => console.log('等待交互后播放'));
+        });
+    </script>
 </body>
 </html>
