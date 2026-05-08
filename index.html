@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的个人主页</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: "微软雅黑", sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.8;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 50px;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #222;
+        }
+        .intro {
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+        .article-list h2 {
+            font-size: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #409eff;
+            padding-left: 10px;
+        }
+        .article-item {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .article-item a {
+            color: #409eff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .article-item a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>我的个人文章主页</h1>
+
+        <div class="intro">
+            欢迎来到我的个人小站，这里记录日常随笔、技术学习笔记、生活感悟。
+            安静写字，慢慢沉淀。
+        </div>
+
+        <div class="article-list">
+            <h2>文章列表</h2>
+            <div class="article-item">
+                <a href="article1.html">第一篇：我的学习随笔</a>
+            </div>
+            <div class="article-item">
+                <a href="article2.html">第二篇：静态网页搭建心得</a>
+            </div>
+            <!-- 以后就在这里继续加文章条目 -->
+        </div>
+    </div>
+</body>
+</html>
