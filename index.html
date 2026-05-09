@@ -15,19 +15,35 @@
             background-color: #f0f2f5;
             color: #333;
             line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        /* 顶部全屏Banner */
+        /* 樱花 */
+        #sakura {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* 🔥 修复：Banner 强制显示背景图 */
         .hero-banner {
             width: 100%;
             height: 100vh;
-            background: url('./images/backgrounds/homepage/wakuwaku.png') center/cover no-repeat;
             position: relative;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+            z-index: 1;
+            background-image: url('./images/backgrounds/homepage/wakuwaku.png') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
         }
         .hero-banner::after {
             content: '';
@@ -38,18 +54,27 @@
             height: 150px;
             background: linear-gradient(to top, #f0f2f5, transparent);
         }
-        .hero-content {
+
+        /* 文字动画 */
+        .banner-text {
+            position: relative;
             text-align: center;
-            z-index: 1;
+            z-index: 5;
         }
-        .hero-content h1 {
-            font-size: 4rem;
-            margin-bottom: 1rem;
+        .banner-main {
+            font-size: 7rem;
+            font-weight: bold;
+            margin-bottom: 20px;
         }
-        .hero-content p {
-            font-size: 1.5rem;
-            opacity: 0.9;
+        .banner-sub {
+            font-size: 3rem;
         }
+        .banner-sub span {
+            opacity: 0;
+            display: inline-block;
+            transition: opacity 0.2s ease;
+        }
+
         .scroll-down {
             position: absolute;
             bottom: 30px;
@@ -57,13 +82,13 @@
             transform: translateX(-50%);
             font-size: 2rem;
             animation: bounce 2s infinite;
+            z-index: 5;
         }
         @keyframes bounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
+            0%,100% { transform: translateX(-50%) translateY(0); }
             50% { transform: translateX(-50%) translateY(10px); }
         }
 
-        /* 主体容器（文章+侧边栏） */
         .main-container {
             max-width: 1200px;
             margin: 0 auto;
@@ -71,9 +96,10 @@
             display: grid;
             grid-template-columns: 3fr 1fr;
             gap: 40px;
+            position: relative;
+            z-index: 2;
         }
 
-        /* 左侧文章列表 */
         .article-section h2 {
             font-size: 1.8rem;
             margin-bottom: 30px;
@@ -88,6 +114,9 @@
             margin-bottom: 30px;
             display: flex;
             transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
         }
         .article-card:hover {
             transform: translateY(-5px);
@@ -96,7 +125,7 @@
         .card-cover {
             width: 250px;
             min-width: 250px;
-            background: url('https://picsum.photos/400/300?random=1') center/cover no-repeat;
+            background: center/cover no-repeat;
         }
         .card-content {
             padding: 25px;
@@ -105,13 +134,8 @@
         .card-title {
             font-size: 1.4rem;
             color: #222;
-            text-decoration: none;
-            display: block;
-            margin-bottom: 10px;
             font-weight: 600;
-        }
-        .card-title:hover {
-            color: #409eff;
+            margin-bottom: 10px;
         }
         .card-meta {
             font-size: 0.9rem;
@@ -123,7 +147,6 @@
             font-size: 1rem;
         }
 
-        /* 右侧个人信息栏 */
         .sidebar-section {
             position: sticky;
             top: 60px;
@@ -140,7 +163,7 @@
             width: 100px;
             height: 100px;
             border-radius: 50%;
-            background: url('./images/profilePicture/jibunn1.png') center/cover no-repeat;
+            background: url('./images/backgrounds/profilePicture/jibunn.png') center/cover no-repeat !important;
             margin: 0 auto 20px;
         }
         .widget-name {
@@ -193,24 +216,6 @@
             color: white;
         }
 
-        /* 响应式适配 */
-        @media (max-width: 900px) {
-            .main-container {
-                grid-template-columns: 1fr;
-            }
-            .article-card {
-                flex-direction: column;
-            }
-            .card-cover {
-                width: 100%;
-                height: 200px;
-            }
-            .hero-content h1 {
-                font-size: 2.5rem;
-            }
-        }
-
-        /* 音乐控制器样式 */
         .music-control {
             position: fixed;
             bottom: 20px;
@@ -224,106 +229,173 @@
             justify-content: center;
             box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             cursor: pointer;
-            z-index: 999;
+            z-index: 9999;
+        }
+
+        @media (max-width: 900px) {
+            .main-container { grid-template-columns: 1fr; }
+            .article-card { flex-direction: column; }
+            .card-cover { width: 100%; height: 200px; }
+            .banner-main { font-size: 3.5rem; }
+            .banner-sub { font-size: 1.8rem; }
         }
     </style>
 </head>
+
 <body>
+<canvas id="sakura"></canvas>
 
-    <!-- ====================================== -->
-    <!--            背景音乐 自动播放            -->
-    <!-- ====================================== -->
-    <audio id="bgm" loop autoplay preload="auto">
-        <source src="./music/nanndemonaiya.mp3" type="audio/mpeg">
-    </audio>
+<audio id="bgm" loop preload="auto"></audio>
+<div class="music-control" onclick="toggleMusic()">🎵</div>
 
-    <!-- 音乐播放/暂停按钮 -->
-    <div class="music-control" onclick="toggleMusic()">🎵</div>
+<div class="hero-banner">
+    <div class="banner-text">
+        <div class="banner-main">nakusitahibi</div>
+        <div class="banner-sub" id="textContainer"></div>
+    </div>
+    <div class="scroll-down">↓</div>
+</div>
 
-    <!-- 顶部全屏Banner -->
-    <div class="hero-banner">
-        <div class="hero-content">
-            <h1>韦天祥</h1>
-            <p>人生苦短</p>
-        </div>
-        <div class="scroll-down">↓</div>
+<div class="main-container">
+    <div class="article-section">
+        <h2>最新文章</h2>
+        <a class="article-card" href="./article/article1/index.html">
+            <div class="card-cover"></div>
+            <div class="card-content">
+                <div class="card-title">I2C tool使用手册</div>
+                <div class="card-meta">发表于 2024-05-14 | 标签：i2ctool</div>
+                <div class="card-excerpt">i2c作为工作中常用到的协议之一，如何优雅的使用？</div>
+            </div>
+        </a>
+        <a class="article-card" href="./article/article2/index.html">
+            <div class="card-cover" style="background-image: url('https://picsum.photos/400/300?random=1')"></div>
+            <div class="card-content">
+                <div class="card-title">Docker教程</div>
+                <div class="card-meta">发表于 2024-04-30 | 标签：Docker</div>
+                <div class="card-excerpt">Docker为什么会出现？开发和上线两套环境的问题，用容器化技术一次性解决...</div>
+            </div>
+        </a>
     </div>
 
-    <!-- 主体内容区 -->
-    <div class="main-container">
-        <!-- 左侧文章列表 -->
-        <div class="article-section">
-            <h2>最新文章</h2>
-
-            <!-- 文章卡片1 -->
-            <div class="article-card">
-                <div class="card-cover"></div>
-                <div class="card-content">
-                    <a href="article1.html" class="card-title">I2C tool使用手册</a>
-                    <div class="card-meta">发表于 2024-05-14 | 标签：i2ctool</div>
-                    <div class="card-excerpt">i2c作为工作中常用到的协议之一，如何优雅的使用？</div>
-                </div>
+    <div class="sidebar-section">
+        <div class="widget">
+            <div class="widget-avatar"></div>
+            <div class="widget-name">韦天祥</div>
+            <div class="widget-bio">人生苦短</div>
+            <div class="widget-stats">
+                <div class="stat-item"><div class="stat-num">2</div><div class="stat-label">文章</div></div>
+                <div class="stat-item"><div class="stat-num">1</div><div class="stat-label">标签</div></div>
+                <div class="stat-item"><div class="stat-num">2</div><div class="stat-label">分类</div></div>
             </div>
-
-            <!-- 文章卡片2 -->
-            <div class="article-card">
-                <div class="card-cover" style="background-image: url('https://picsum.photos/400/300?random=2');"></div>
-                <div class="card-content">
-                    <a href="docker教程.html" class="card-title">Docker教程</a>
-                    <div class="card-meta">发表于 2024-04-30 | 标签：Docker</div>
-                    <div class="card-excerpt">Docker为什么会出现？开发和上线两套环境的问题，用容器化技术一次性解决...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- 右侧个人信息栏 -->
-        <div class="sidebar-section">
-            <div class="widget">
-                <div class="widget-avatar"></div>
-                <div class="widget-name">韦天祥</div>
-                <div class="widget-bio">人生苦短</div>
-                
-                <div class="widget-stats">
-                    <div class="stat-item">
-                        <div class="stat-num">10</div>
-                        <div class="stat-label">文章</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-num">14</div>
-                        <div class="stat-label">标签</div>
-                    </div>
-                    <div class="stat-item">
-                        <div class="stat-num">8</div>
-                        <div class="stat-label">分类</div>
-                    </div>
-                </div>
-
-                <div class="widget-links">
-                    <a href="#" class="link-btn">📺</a>
-                    <a href="#" class="link-btn">🎵</a>
-                    <a href="#" class="link-btn">💬</a>
-                    <a href="#" class="link-btn">🐱</a>
-                    <a href="#" class="link-btn">✉️</a>
-                </div>
+            <div class="widget-links">
+                <a href="#" class="link-btn">📺</a>
+                <a href="#" class="link-btn">🎵</a>
+                <a href="#" class="link-btn">💬</a>
+                <a href="#" class="link-btn">🐱</a>
+                <a href="#" class="link-btn">✉️</a>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        // 音乐播放/暂停
-        var bgm = document.getElementById('bgm');
-        function toggleMusic() {
-            if (bgm.paused) {
-                bgm.play();
-            } else {
-                bgm.pause();
+<script>
+    // ==============================================
+    // 音乐
+    // ==============================================
+    const musics = [
+        "./music/nanndemonaiya.mp3",
+        "./music/yakimochi.mp3",
+        "./music/hanabiwouchiageru.mp3",
+    ];
+    const bgm = document.getElementById("bgm");
+    bgm.innerHTML = `<source src="${musics[Math.floor(Math.random()*musics.length)]}" type="audio/mpeg">`;
+
+    window.addEventListener("load", () => {
+        document.addEventListener('click', () => bgm.play(), { once: true });
+    });
+    function toggleMusic() { bgm.paused ? bgm.play() : bgm.pause(); }
+
+    // ==============================================
+    // 文字逐字出现 + 逐字消失 循环
+    // ==============================================
+    const text = "难过的时候，就慢慢地活下去";
+    const container = document.getElementById("textContainer");
+    const letters = [];
+
+    for (let i = 0; i < text.length; i++) {
+        const s = document.createElement("span");
+        s.innerText = text[i];
+        container.appendChild(s);
+        letters.push(s);
+    }
+
+    async function run() {
+        while (true) {
+            // 逐字出现
+            for (let i = 0; i < letters.length; i++) {
+                await new Promise(r => setTimeout(r, 120));
+                letters[i].style.opacity = 1;
+            }
+            await new Promise(r => setTimeout(r, 2000)); // 停留
+
+            // 逐字消失
+            for (let i = letters.length - 1; i >= 0; i--) {
+                await new Promise(r => setTimeout(r, 120));
+                letters[i].style.opacity = 0;
+            }
+            await new Promise(r => setTimeout(r, 800));
+        }
+    }
+    run();
+
+    // ==============================================
+    // 樱花特效
+    // ==============================================
+    const canvas = document.getElementById("sakura");
+    const ctx = canvas.getContext("2d");
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    class Petal {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height - canvas.height;
+            this.r = Math.random() * 5 + 2;
+            this.sy = Math.random() * 1 + 0.5;
+            this.sx = Math.random() * 0.5 - 0.25;
+            this.alpha = Math.random() * 0.6 + 0.4;
+        }
+        update() {
+            this.y += this.sy;
+            this.x += this.sx;
+            if (this.y > canvas.height) {
+                this.y = -10;
+                this.x = Math.random() * canvas.width;
             }
         }
+        draw() {
+            ctx.save();
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = "#ffc0dd";
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
 
-        // 页面加载后自动播放
-        window.addEventListener('load', function() {
-            bgm.play().catch(e => console.log('等待交互后播放'));
-        });
-    </script>
+    const petals = Array.from({length: 100}, () => new Petal());
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        petals.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
+</script>
 </body>
 </html>
