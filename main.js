@@ -1,39 +1,119 @@
 // ==============================
-// 文章配置（只改这里）
+// 文章数据
 // ==============================
 const articles = [
-    {
-        title: "I2C tool使用手册",
-        desc: "i2c作为工作中常用到的协议之一，如何优雅的使用？",
-        path: "./article/article1/index.html",
-        cover: ""
-    },
-    {
-        title: "Docker教程",
-        desc: "Docker为什么会出现？开发和上线两套环境的问题，用容器化技术一次性解决",
-        path: "./article/article1/index.html",
-        cover: "https://picsum.photos/400/300?random=1"
-    }
-];
-
-// ==============================
-// 自动渲染文章
-// ==============================
-function renderArticles() {
-    const list = document.getElementById('articleList');
-    list.innerHTML = '';
-    articles.forEach(art => {
+    { title: "I2C tool的使用", desc: "作为实际应用中最常见的工具，如何优雅得使用？", path: "/article/1/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章2", desc: "描述2", path: "/article/2/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章3", desc: "描述3", path: "/article/3/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章4", desc: "描述4", path: "/article/4/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章5", desc: "描述5", path: "/article/5/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章6", desc: "描述6", path: "/article/6/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章7", desc: "描述7", path: "/article/7/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章8", desc: "描述8", path: "/article/8/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章9", desc: "描述9", path: "/article/9/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章10", desc: "描述10", path: "/article/10/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章11", desc: "描述11", path: "/article/11/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "文章12", desc: "描述12", path: "/article/12/index.html", cover: "https://picsum.photos/400/300?random=1" },
+  ];
+  
+  // ==============================
+  // 分页配置
+  // ==============================
+  const PAGE_SIZE = 10; // 每页10篇
+  let currentPage = 1;
+  
+  // ==============================
+  // 渲染当前页文章
+  // ==============================
+  function renderArticles() {
+    const list = document.getElementById("articleList");
+    const pagination = document.getElementById("pagination");
+    list.innerHTML = "";
+  
+    // 计算分页
+    const total = articles.length;
+    const totalPage = Math.ceil(total / PAGE_SIZE);
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const pageData = articles.slice(start, end);
+  
+    // 渲染文章
+    pageData.forEach((art, index) => {
+        const globalIndex = (currentPage - 1) * PAGE_SIZE + index;
+        const isRight = globalIndex % 2 === 1;
+      
         list.innerHTML += `
-        <a class="article-card" href="${art.path}">
-            <div class="card-cover" style="background-image: url('${art.cover}')"></div>
-            <div class="card-content">
+        <a class="article-card ${isRight ? 'article-card-reverse' : ''}" href="${art.path}">
+            <div class="card-text">
                 <div class="card-title">${art.title}</div>
                 <div class="card-excerpt">${art.desc}</div>
             </div>
+            <div class="card-image" style="background-image: url('${art.cover || ''}');"></div>
         </a>`;
     });
-    document.getElementById('articleCount').innerText = articles.length;
-}
+  
+    // 渲染分页按钮
+    renderPagination(totalPage);
+  }
+  
+  // ==============================
+  // 渲染分页按钮
+  // ==============================
+  function renderPagination(totalPage) {
+    const el = document.getElementById("pagination");
+    el.innerHTML = "";
+  
+    if (totalPage <= 1) return;
+  
+    // 首页
+    const first = createBtn("首页", currentPage === 1, () => {
+      currentPage = 1;
+      renderArticles();
+    });
+  
+    // 上一页
+    const prev = createBtn("上一页", currentPage === 1, () => {
+      currentPage--;
+      renderArticles();
+    });
+  
+    el.appendChild(first);
+    el.appendChild(prev);
+  
+    // 数字页
+    for (let i = 1; i <= totalPage; i++) {
+      const num = createBtn(i, false, () => {
+        currentPage = i;
+        renderArticles();
+      });
+      if (i === currentPage) num.classList.add("active");
+      el.appendChild(num);
+    }
+  
+    // 下一页
+    const next = createBtn("下一页", currentPage === totalPage, () => {
+      currentPage++;
+      renderArticles();
+    });
+  
+    // 尾页
+    const last = createBtn("尾页", currentPage === totalPage, () => {
+      currentPage = totalPage;
+      renderArticles();
+    });
+  
+    el.appendChild(next);
+    el.appendChild(last);
+  }
+  
+  // 按钮生成工具
+  function createBtn(text, disabled, click) {
+    const btn = document.createElement("button");
+    btn.innerText = text;
+    btn.disabled = disabled;
+    btn.onclick = click;
+    return btn;
+  }
 
 // ==============================
 // 音乐
