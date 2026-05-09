@@ -1,0 +1,32 @@
+/* .kaban {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    width: 110px;
+    height: auto;
+    z-index: 9998;
+    pointer-events: none;
+    transform-origin: bottom center;
+    transition: transform 0.15s ease-out;
+    border: none;
+    background: transparent;
+} */
+.kaban {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    width: 110px;
+    height: auto;
+    z-index: 9998;
+    pointer-events: none;
+    transition: transform 0.15s ease-out;
+    transform-origin: center 30%;   
+}
+
+.kaban img {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: contain;
+    background: transparent;
+}

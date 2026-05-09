@@ -88,7 +88,25 @@ body {
     gap: 40px;
     position: relative;
     z-index: 2;
+
+    /* 下面是新增的背景图配置 */
+    background: url('../../images/backgrounds/homepage/bg2.png') no-repeat center center;
+    background-size: cover;
+    background-attachment: fixed;
+    padding-top: 60px;
+    padding-bottom: 80px;
+    border-radius: 16px;
 }
+/* .main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    display: grid;
+    grid-template-columns: 3fr 1fr;
+    gap: 40px;
+    position: relative;
+    z-index: 2;
+} */
 
 .article-section h2 {
     font-size: 1.8rem;
