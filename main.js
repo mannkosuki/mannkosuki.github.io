@@ -217,6 +217,8 @@ renderArticles();
 runText();
 animateSakura();
 
+document.getElementById("articleCount").innerText = articles.length;
+
 window.addEventListener('resize', () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;

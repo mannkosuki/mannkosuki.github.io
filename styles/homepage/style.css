@@ -31,7 +31,7 @@ body {
     color: white;
     text-shadow: 0 2px 10px rgba(0,0,0,0.7);
     z-index: 1;
-    background-image: url('./../../images/backgrounds/homepage/wakuwaku.png') !important;
+    background-image: url('./../../images/backgrounds/homepage/bg1.png') !important;
     background-size: cover !important;
     background-position: center !important;
     background-repeat: no-repeat !important;
