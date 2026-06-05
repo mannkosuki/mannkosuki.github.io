@@ -3,153 +3,329 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文章标题 - 不动声色 的小站</title>
-    <link rel="stylesheet" href="../../styles/article/style.css">
+    <title>i2c工具使用指南 - 不动声色的小站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --text-color: #333;
+            --text-secondary: #555;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --code-bg: #f8f9fa;
+            --header-bg: #8e8e8e;
+            --danger-color: #DF2A3F;
+            --warning-bg: #fff3cd;
+            --warning-border: #ffc107;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8; color: var(--text-color); background: var(--bg-color); font-size: 15px;
+        }
+        .article-header {
+            position: relative; height: 320px; background: var(--header-bg);
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; color: white; overflow: hidden;
+        }
+        .header-bg-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; opacity: 0.2;
+        }
+        .header-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+        }
+        .header-content { position: relative; z-index: 2; max-width: 900px; padding: 0 30px; }
+        .article-title {
+            font-size: 2.2rem; font-weight: 700; margin-bottom: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4); line-height: 1.4; letter-spacing: 1px;
+        }
+        .article-meta {
+            font-size: 0.9rem; opacity: 0.85; display: flex;
+            justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .article-meta .separator { opacity: 0.5; font-weight: 300; }
+        .article-container {
+            max-width: 900px; margin: 0 auto; padding: 50px 40px;
+            background: var(--card-bg); min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 1.9rem; color: var(--primary-color); margin: 40px 0 25px 0;
+            padding-bottom: 12px; border-bottom: 3px solid var(--accent-color);
+            font-weight: 700;
+        }
+        h1:first-of-type { margin-top: 10px; }
+        h2 {
+            font-size: 1.5rem; color: var(--primary-color); margin: 35px 0 20px 0;
+            padding-bottom: 8px; border-bottom: 2px solid #ecf0f1; font-weight: 600;
+        }
+        h3 {
+            font-size: 1.2rem; color: #34495e; margin: 25px 0 15px 0; font-weight: 600;
+        }
+        p { margin-bottom: 16px; text-align: justify; color: var(--text-secondary); line-height: 1.9; }
+        ul, ol { margin: 12px 0; padding-left: 24px; }
+        li { margin-bottom: 8px; color: var(--text-secondary); line-height: 1.8; }
+        li > ul, li > ol { margin-top: 6px; margin-bottom: 6px; }
+        img {
+            max-width: 100%; height: auto; display: block; margin: 20px auto;
+            border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        pre {
+            background: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 18px 20px; overflow-x: auto; margin: 20px 0;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            font-size: 0.85rem; line-height: 1.7; color: #333;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            background: #f0f0f0; padding: 2px 6px; border-radius: 4px;
+            font-size: 0.88em; color: #c7254e;
+        }
+        pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+        .command-block {
+            background: #1e1e1e; color: #d4d4d4; border-radius: 8px;
+            padding: 16px 20px; margin: 15px 0; overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            font-size: 0.9rem; line-height: 1.6;
+        }
+        .command-block .prompt { color: #6cc644; }
+        .command-block .cmd { color: #d4d4d4; }
+        .command-block .comment { color: #6a9955; }
+        .warning-box {
+            background: var(--warning-bg); border-left: 4px solid var(--warning-border);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+        }
+        .danger-box {
+            background: #fdf2f2; border-left: 4px solid var(--danger-color);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+            color: #92400e;
+        }
+        .highlight-red { color: var(--danger-color); font-weight: 600; }
+        table {
+            width: 100%; border-collapse: collapse; margin: 20px 0;
+            font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: 6px; overflow: hidden;
+        }
+        th, td {
+            border: 1px solid var(--border-color); padding: 12px 14px;
+            text-align: left; vertical-align: top;
+        }
+        th { background: #f8f9fa; font-weight: 600; color: var(--primary-color); }
+        tr:nth-child(even) { background: #fafbfc; }
+        .img-error {
+            text-align: center; color: #e74c3c; padding: 20px;
+            background: #fdf2f2; border-radius: 6px; margin: 10px 0; font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            .article-header { height: 260px; }
+            .article-title { font-size: 1.5rem; }
+            .article-container { padding: 25px 18px; }
+            h1 { font-size: 1.4rem; }
+            h2 { font-size: 1.2rem; }
+            pre { padding: 14px 16px; font-size: 0.8rem; }
+        }
+        html { scroll-behavior: smooth; }
+        ::selection { background: rgba(52, 152, 219, 0.2); color: var(--primary-color); }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <header class="article-header">
+        <div class="header-bg-img" style="background-image: url('https://images.unsplash.com/photo-1518770660439-4636190af475?w=1200');"></div>
+        <div class="header-overlay"></div>
+        <div class="header-content">
+            <h1 class="article-title">i2c工具使用指南</h1>
+            <div class="article-meta">
+                <span>发表于 2026-05-14</span>
+                <span class="separator">|</span>
+                <span>更新于 2026-05-14</span>
+                <span class="separator">|</span>
+                <span>字数总计: 3.2k</span>
+                <span class="separator">|</span>
+                <span>阅读时长: 10分钟</span>
+            </div>
+        </div>
+    </header>
+    <div class="article-container">
+
+        <h1>i2c扫描</h1>
+
+        <div class="command-block">
+            <span class="prompt">$</span> <span class="cmd">systemctl stop system-xyz.openbmc_project.Hwmon.slice</span>
+        </div>
+
+        <p>上面的指令可以停止i2c自动的扫描（有些设备会一直扫描，一般在调试的时候需要停掉，否则抓不到发送的数据（因为数据太多））</p>
+
+        <h2>i2cdetect</h2>
+
+        <p><strong>Usage：</strong></p>
+        <pre><code>i2cdetect [-y] [-a] [-q|-r] i2cbus [first last]
+i2cdetect -F i2cbus
+i2cdetect -V
+i2cdetect -l(小写的字母L)</code></pre>
+
+        <p><strong>说明：</strong></p>
+        <p>i2cdetect会以表格的形式输出指定的i2c bus上的i2c设备</p>
+        <p>上面说到的 <code>i2cbus</code> 就是指定的 i2c总线，（这里是软件上的i2cbus的编号，一般从0开始，硬件上一般从1开始编号） <code>[first last]</code> 指定扫描的范围（我的理解是指定i2c 设备的address范围）i2cdetect同样可以查询i2c总线的功能，关于这一点请看选项 <code>-F</code></p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/29657337/1668132143921-d7b3d9b8-faec-43ba-83b0-a2cb92831b08.png" alt="i2cdetect扫描结果示例" referrerpolicy="no-referrer">
+
+        <p>上图表示i2c0上挂载两个设备，地址是0x10和0x20,（这里的地址是7位地址，不包含最后的读写位，实际的地址需要乘以2,即左移一位）这里的0x20的位置的i2c设备处于uu状态，即表示该设备是被内核驱动占用，无法轻易的使用i2cget或者i2cset去修改获取其中的寄存器的值，而--则表示该位置上并未挂载i2c设备。</p>
+
+        <p><strong>选项：</strong></p>
+        <ul>
+            <li><code>-y</code>：禁用交互模式。默认情况下，i2cdetect将在使用i2cdetdct时会等待用户的确认。使用此标志时，它将直接执行操作。这主要用于脚本中。</li>
+            <li><code>-a</code>：强制扫描非常规地址。不建议这样做。</li>
+            <li><code>-q</code>：使用SMBus"快速写入"命令进行探测</li>
+            <li><code>-r</code>：使用SMBus"接收字节"命令进行探测。不建议这样做。</li>
+            <li><code>-F</code>：显示i2c bus的功能</li>
+            <li><code>-V</code>：显示版本</li>
+            <li><code>-l</code>：显示已安装的i2c总线列表</li>
+        </ul>
+
+        <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1768443610568-866e79bf-012a-4740-afdc-bade7dd3cc49.png" alt="i2cdetect -l 显示所有i2c总线" referrerpolicy="no-referrer">
+
+        <p class="highlight-red">-l能清楚的看到各个bus下虚拟bus等在哪个bus的哪个channel下</p>
+
+        <h2>i2cget</h2>
+
+        <p>i2cget是一个可以获取指定的i2c bus指定的i2c address上指定寄存器地址的寄存器的值</p>
+
+        <p><strong>Usage：</strong></p>
+        <pre><code>i2cget [-f] [-y] [-a] i2cbus chip-address [data-address [mode]]
+i2cget -V</code></pre>
+
+        <ul>
+            <li><code>-V</code>：版本</li>
+            <li><code>-f</code>：强制访问设备，即使设备在busy状态。默认情况下，i2cget将拒绝访问已经在内核驱动程序控制下的设备。使用-f是危险的，它会严重混淆所讨论的内核驱动程序。它还可能导致i2cget返回无效值。因此，只有在你知道自己在做什么的情况下，才可以使用它。</li>
+            <li><code>-y</code>：同i2cdetect</li>
+            <li><code>-a</code>：-a参数允许使用0x00-0x07和0x78-0x7f之间的地址,不建议这样做。（因为i2c协议上预留了两组各八个地址有特殊的用途，这里说的都是7位地址，除去最后的读写位，这里写成了八位是因为右移了一位，所以仍是八位，下图为预留）</li>
+        </ul>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/29657337/1668132144851-0977f361-b99b-4043-a2cd-3bb036ae8959.png" alt="i2c预留地址表" referrerpolicy="no-referrer">
+
+        <p><code>data-address</code>：数据地址指定芯片上要读取的地址，是0x00和0xFF之间的整数。如果省略，将读取当前活动寄存器（如果这对所考虑的芯片有意义）。</p>
+        <p><code>mode</code>：mode参数为b,w,c三者之一，分别对应于读字节数据，读字数据，或写字节/读字节数据</p>
+
+        <h2>i2cdump</h2>
+
+        <p>i2cdump用于检查通过I2C总线可见的寄存器</p>
+
+        <p><strong>Usage：</strong></p>
+        <pre><code>i2cdump [-f] [-r first-last] [-y] [-a] i2cbus address [mode [bank [bankreg]]]
+i2cdump -V</code></pre>
+
+        <ul>
+            <li><code>-V</code> 同上，显示版本</li>
+            <li><code>-f</code> 即使设备已经繁忙，也强制访问该设备。默认情况下，i2cdump将拒绝访问已经由内核驱动程序控制的设备。使用此标志是危险的，它会严重混淆相关的内核驱动程序。它还可能导致i2cdump返回无效的结果。所以，只有在你知道自己在做什么的情况下，才可以冒险使用</li>
+            <li><code>-r first-last</code> 限制正在访问的寄存器的范围。这个选项只适用于b、w、c和W。并且W模式下第一个必须为偶数，最后一个必须为奇数</li>
+            <li><code>-y</code> 同上，默认允许，脚本中最常见</li>
+            <li><code>-a</code> 同上，-a参数使得使用者可以访问I2C总线预留的16个地址，一般情况下这16个地址在i2c spec上是有特殊用途的</li>
+        </ul>
+
+        <div class="danger-box">
+            <strong>PS：</strong>i2cdump在使用不当的情况下十分危险的，尤其应该注意c模式，这个模式开始就会写入一个字节的数据到芯片上，大部分的情况下，这个写的数据会被存储在指地址指针寄存器中，并没有真正的写入到数据中，这种情况下是没有问题的，但是对一些具有单个寄存器或是没有寄存器的芯片来说，这种写的操作是一种真正地写入操作，是很危险的，从而导致错误行为或损坏。需要尤其要注意
+        </div>
+
+        <p><strong>举例：</strong></p>
+        <pre><code>#在i2c总线9（软件编号为9，实际应该为10），i2c地址为0x50（七位地址）的器件上的所有寄存器的内容
+i2cdump 9 0x50
+
+#获取在i2c5上i2c地址为0x36的器件上，寄存器地址从0x00到0x30的内容
+i2cdump -r 0x00-0x30 5 0x36</code></pre>
+
+        <h2>i2cset</h2>
+
+        <p>i2cset用于设置通过i2c可见的寄存器</p>
+
+        <p><strong>Usage：</strong></p>
+        <pre><code>i2cset [-f] [-y] [-m mask] [-r] [-a] i2cbus chip-address data-address [value] ... [mode]
+i2cset -V</code></pre>
+
+        <ul>
+            <li><code>-V</code> 同上</li>
+            <li><code>-f</code> 同上，强制访问设备，即便设备正在被内核占用</li>
+            <li><code>-y</code> 同上</li>
+            <li><code>-m mask</code> </li>
+        </ul>
+
+        <h2>i2ctransfer</h2>
+
+        <p>i2ctransfer用于将数据打包好发送写道指定i2cbus下i2c地址。</p>
+
+        <p><strong>Usage：</strong></p>
+        <pre><code>i2ctransfer [-f] [-y] [-v] [-a] i2cbus desc [data] [desc [data]] ...
+i2ctransfer -V</code></pre>
+
+        <ul>
+            <li><code>-f</code> 同上，强制访问</li>
+            <li><code>-V</code>同上版本</li>
+            <li><code>-y</code> 同上</li>
+            <li><code>-v</code> 打印读写详细信息，类似于ipmitool的-v</li>
+            <li><code>-a</code> 同上</li>
+        </ul>
+
+        <p><code>desc</code> desc为一个或多个块，这个是由内核决定的，desc块的组成如下：</p>
+        <pre><code>{r|w}&lt;length_of_message&gt;[@address]</code></pre>
+        <ul>
+            <li><code>{r|w}</code>用于决定操作是读或是写</li>
+            <li><code>&lt;length_of_message&gt;</code>代表读或是写的数据字节数，该数据被解析为一个个的无符号int型数据，这个读或是写的字节是有最大长度的</li>
+            <li><code>[@address]</code> i2c 7bit 地址</li>
+        </ul>
+        <p><code>data</code> ：当操作为写时，后面几即为需要写入的数据，数据后可附上"="，"+"，"-"几个运算，分别表示写入相同的数据，递增的数据和递减的数据</p>
+
+        <p><strong>example:</strong></p>
+        <pre><code>i2ctransfer -y -f 11 w1@0x50 0x64 r8
+#上述表示在i2c总线11上，i2c地址为0x50，寄存器地址为0x64上读8个字节的数据
+
+i2ctransfer -y -f 11 w16@0x50 0x03 0x01+
+#表示在上次表示在i2c总线11上，i2c地址为0x50，寄存器地址为0x03写入16个字节的数据，并且这16个字节的数据是从0x01递增（0x1,0x02 ......）</code></pre>
+
+        <div class="danger-box">
+            <strong>PS：</strong>
+            <p>i2ctransfer的应用场景往往是某一个寄存器的读值需要先写，然后才能正确的对应的值，比如：</p>
+            <p>BMC在点灯的时候回去读下面的寄存器：</p>
+        </div>
+
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1746524338008-e1f3fe01-0ad0-461e-8d36-f193620a491f.png" alt="寄存器0x91获取硬盘状态时序图" referrerpolicy="no-referrer">
+
+        <p class="highlight-red">上面需要先往0x91寄存器先去写 需要读到的硬盘的偏移地址，再去读取0x91读取值，所以常见的应用场景是先往一个控制寄存器去写需要读取的信息的地址，然后控制寄存器自动去拿到读值后写到该控制寄存器的地址中，然后我们再去读，并且上述情形一般必须先写再去读，如果直接去读取的话的值往往和实际对应不上，因为这种控制寄存器一般会有一个默认值，在去写控制寄存器的值之后的短暂时间内存放的是实际需要读到的值，这之后就会恢复默认值，此时的值并非真正需要读取的值，以上图为例，实际的环境下的动作为：</p>
+
+        <div class="command-block">
+            <span class="prompt">$</span> <span class="cmd">i2cset -f -y 1 0x65 0x91 0x02 && i2cget -f -y 1 0x65 0x91</span>
+        </div>
+
+        <p>可以直接用一个命令代替：</p>
+        <div class="command-block">
+            <span class="prompt">$</span> <span class="cmd">i2ctransfer -f -y 1 w2@0x65 0x91 0x02 r1</span>
+        </div>
+
+        <p class="highlight-red">要注意这里的w2表示的是写入两个数据即0x91 和0x02，但是实际分析的时候却是仅仅写了一个数据0x02，在 I2C 通信里，向设备的指定寄存器写入数据时，通常要分两步走：首先指定目标寄存器的地址，接着再写入具体的数据。所以，虽然表面上看你只是要写入一个数据 0x02，但实际上在 I2C 操作过程中会涉及两个字节的数据传输，这就是使用 w2 的原因。</p>
+
+        <p class="highlight-red">所以仅有i2ctransfer命令需要注意wX的X表示 写入数据数量 是包含寄存器地址的数据的</p>
+
+        <p>i2ctransfer -y -f 11 w1@0x50 0x64 r1</p>
+        <p>上述的w1表示写一个数据也仅仅是寄存器地址，并没有实际去往寄存器写值，故等同于 <code>i2cget -f -y 11 0x50 0x64</code></p>
+
+    </div>
+
+    <script src="../../sakura.js"></script>
     <script>
-        // 自动修复语雀图片跨域问题
         document.addEventListener('DOMContentLoaded', () => {
-            document.querySelectorAll('.article-content img').forEach(img => {
-                // 替换语雀图片地址为可直接访问的格式
+            document.querySelectorAll('img').forEach(img => {
                 const src = img.getAttribute('src');
                 if (src && src.includes('cdn.nlark.com')) {
-                    // 强制添加 referrer 头，绕过防盗链
                     img.setAttribute('referrerpolicy', 'no-referrer');
-                    // 备用方案：如果加载失败，显示错误提示
                     img.onerror = function() {
                         this.style.display = 'none';
-                        this.insertAdjacentHTML('afterend', '<p style="color:red;text-align:center;">⚠️ 图片加载失败，请手动下载并替换为本地路径</p>');
+                        this.insertAdjacentHTML('afterend', '<p class="img-error">⚠️ 图片加载失败，请手动下载并替换为本地路径</p>');
                     };
                 }
             });
         });
-        </script>
-</head>
-<body>
-    <!-- 顶部大图标题栏 -->
-    <header class="article-header">
-        <div class="header-bg" style="background-image: url('你的文章封面图.jpg');"></div>
-        <div class="header-overlay"></div>
-        <div class="header-content">
-            <h1 class="article-title">2022年中职组全国职业院校技能大赛网络搭建与应用赛项（交换解法）</h1>
-            <div class="article-meta">
-                <span>发表于 2024-05-14</span>
-                <span>|</span>
-                <span>更新于 2024-05-14</span>
-                <span>|</span>
-                <span>字数总计: 3.4k</span>
-                <span>|</span>
-                <span>阅读时长: 13分钟</span>
-            </div>
-        </div>
-    </header>
-
-    <!-- 主体内容区 -->
-    <div class="article-container">
-        <p>i2c扫描</p>
-        <p>systemctl stop system-xyz.openbmc_project.Hwmon.slice</p>
-        <p>上面的指令可以停止i2c自动的扫描（有些设备会一直扫描，一般在调试的时候需要停掉，否则抓不到发送的数据（因为数据太多））</p>
-        <p><strong>i2detect</strong></p>
-        <p>Usage：</p>
-        <p>i2cdetect [-y] [-a] [-q|-r] i2cbus [first last]</p>
-        <p>i2cdetect -F i2cbus</p>
-        <p>i2cdetect -V</p>
-        <p>i2cdetect -l(小写的字母L)</p>
-        <p>说明：</p>
-        <p>i2cdetect会以表格的形式输出指定的i2c bus上的i2c设备</p>
-        <p>上面说到的 i2cbus就是指定的 i2c总线，（这里是软件上的i2cbus的编号，一般从0开始，硬件上一般从1开始编号） [first last]指定扫描的范围（我的理解是指定i2c 设备的address范围）i2cdetect同样可以查询i2c总线的功能，关于这一点请看选项-F</p>
-        <!-- 这是一张图片，ocr 内容为： -->
-        <p><img src="https://cdn.nlark.com/yuque/0/2022/png/29657337/1668132143921-d7b3d9b8-faec-43ba-83b0-a2cb92831b08.png" alt=""></p>
-        <p>上图表示i2c0上挂载两个设备，地址是0x10和0x20,（这里的地址是7位地址，不包含最后的读写位，实际的地址需要乘以2,即左移一位）这里的0x20的位置的i2c设备处于uu状态，即表示该设备是被内核驱动占用，无法轻易的使用i2cget或者i2cset去修改获取其中的寄存器的值，而--则表示该位置上并未挂载i2c设备。</p>
-        <p>选项：</p>
-        <p>-y：禁用交互模式。默认情况下，i2cdetect将在使用i2cdetdct时会等待用户的确认。使用此标志时，它将直接执行操作。这主要用于脚本中。</p>
-        <p>-a：强制扫描非常规地址。不建议这样做。</p>
-        <p>-q：使用SMBus“快速写入”命令进行探测</p>
-        <p>-r：使用SMBus“接收字节”命令进行探测。不建议这样做。</p>
-        <p>-F：显示i2c bus的功能</p>
-        <p>-V：显示版本</p>
-        <p>-l：显示已安装的i2c总线列表 </p>
-        <!-- 这是一张图片，ocr 内容为：I2CDETECT - SUPERUSER@E8611A374F84:~# I2C ADAPTER LE7A3000.I3C1 I2C-143 I2C I2C-0-MUX (CHAN_ID 3) 12C ADAPTER I2C-133  I2C 12C ADAPTER I2C-15 1E78A800.12C-BUS 5 I2C 12C ADAPTER I2C-3 I2C LE78A200.12C-BUS (CHAN_ID 3) 12C ADAPTER I2C-141 I2C 12C-14-MUX I2C-8-MUX (CHAN_ID 1) I2C-131 I2C I2C ADAPTER I2C-13 I2C 1E78A700.I2C-BUS I2C ADAPTER I2C I2C-12C ADAPTER LE78A100.12C-BUS I2C-0-MUX (CHAN_ID 2) I2C I2C-121  I2C ADAPTER I2C-11-MUX (CHAN_ID O) I2C-101 I2C I2C ADAPTER 1E78A600.I2C-BUS I2C-11  I2C 12C ADAPTER I2C-138 I2C I2C I2C-14-MUX (CHAN_ID 3) ADAPTER 12C I2C-8 I2C 1E78A480.12C-BUS ADAPTER I2C-11-MUX (CHAN ID 2) I2C-128 I2C I2C ADAPTER I2C-118 I2C 12C ADAPTER I2C-14-MUX(CHAN ID  0) I2C-12-MUX(CHAN ID 3) I2C I2C-108 I2C ADAPTER I2C-14-MUX (CHAN_ID 1) I2C-136 I2C 12C ADAPTER I2C-6 I2C LE78A380.I2C-BUS 12C ADAPTER I2C-12-MUX (CHAN_ID 3) I2C-116 ADAPTER I2C I2C I2C-144 I2C 12C LE7A4000.I3C2 ADAPTER I2C-12-MUX (CHAN_ID 2) I2C-106 I2C I2C ADAPTER I2C-134 I2C-8-MUX(CHAN ID 3) I2C ADAPTER I2C I2C-4 LE78A280.12C-BUS I2C ADAPTER 12C I2C-12-MUX (CHAN_ID 2) I2C-114 I2C 12C ADAPTER I2C I2C-142 I2C LE7A2000.I3C0 ADAPTER I2C-12-MUX (CHAN_ID 1) 12C ADAPTER I2C-104 I2C I2C-8-MUX (CHAN_ID 2) I2C 12C-132 12C ADAPTER I2C-14  I2C I2C ADAPTER LE78A780.12C-BUS I2C-2 I2C I2C LE78A180.I2C-BUS ADAPTER I2C-112 I2C I2C-12-MUX(CHAN ID 1) I2C ADAPTER I2C-140 I2C 12C I2C-14-MUX(CHAN_ID  2) ADAPTER I2C-12-MUX(CHAN ID  0) I2C I2C-102 I2C ADAPTER I2C-8-MUX (CHAN_ID O) I2C I2C-130 I2C ADAPTER I2C-12  I2C LE78A680.I2C-BUS I2C ADAPTER I2C-0 I2C I2C 1E78A080.I2C-BUS ADAPTER 12C ADAPTER I2C-0-MUX(CHAN_ID 1) I2C-120 I2C I2C-110 I2C I2C-12-MUX (CHAN_ID O) I2C ADAPTER I2C-14-MUX (CHAN_ID 1) I2C-139 I2C 12C ADAPTER I2C-0-MUX (CHAN_ID O) I2C-100 I2C I2C ADAPTER 12C I2C-10 I2C 1E78A580.12C-BUS ADAPTER I2C-14-MUX (CHAN_ID 0) 12C I2C-119 I2C ADAPTER 12C ADAPTER I2C-14-MUX(CHAN ID  2) I2C-137 I2C I2C-7  I2C 12C ADAPTER 1E78A400.12C-BUS I2C-127 I2C AN_ID 1) 12C-11-MUX(CHAN) I2C ADAPTER 12C ADAPTER I2C-145 1E7A5000.I3C3 12C I2C-11-MUX (CHAN_ID 3) 12C ADAPTER I2C-135 I2C 12C ADAPTER I2C-5  I2C LE78A300.12C-BUS -->
-        <p><img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1768443610568-866e79bf-012a-4740-afdc-bade7dd3cc49.png" alt=""></p>
-        <p><strong><font style="color:#DF2A3F;">-l能清楚的看到各个bus下虚拟bus等在哪个bus的哪个channel下</font></strong></p>
-        <p><strong>i2cget </strong></p>
-        <p>i2cget是一个可以获取指定的i2c bus指定的i2c address上指定寄存器地址的寄存器的值</p>
-        <p>Usage：</p>
-        <p>i2cget [-f] [-y] [-a] i2cbus chip-address [data-address [mode]]</p>
-        <p>i2cget -V</p>
-        <p>-V：版本</p>
-        <p>-f：强制访问设备，即使设备在busy状态。默认情况下，i2cget将拒绝访问已经在内核驱动程序控制下的设备。使用-f是危险的，它会严重混淆所讨论的内核驱动程序。它还可能导致i2cget返回无效值。因此，只有在你知道自己在做什么的情况下，才可以使用它。</p>
-        <p>-y：同i2cdetect</p>
-        <p>-a：-a参数允许使用0x00-0x07和0x78-0x7f之间的地址,不建议这样做。（因为i2c协议上预留了两组各八个地址有特殊的用途，这里说的都是7位地址，除去最后的读写位，这里写成了八位是因为右移了一位，所以仍是八位，下图为预留）</p>
-        <!-- 这是一张图片，ocr 内容为： -->
-        <p><img src="https://cdn.nlark.com/yuque/0/2022/png/29657337/1668132144851-0977f361-b99b-4043-a2cd-3bb036ae8959.png" alt=""></p>
-        <p>data-address：数据地址指定芯片上要读取的地址，是0x00和0xFF之间的整数。如果省略，将读取当前活动寄存器（如果这对所考虑的芯片有意义）。</p>
-        <p>mode：mode参数为b,w,c三者之一，分别对应于读字节数据，读字数据，或写字节/读字节数据</p>
-        <p>i2cdump</p>
-        <p>i2cdump用于检查通过I2C总线可见的寄存器</p>
-        <p>Usage：</p>
-        <p>i2cdump [-f] [-r first-last] [-y] [-a] i2cbus address [mode [bank [bankreg]]]</p>
-        <p>i2cdump -V</p>
-        <p>-V 同上，显示版本</p>
-        <p>-f  即使设备已经繁忙，也强制访问该设备。默认情况下，i2cdump将拒绝访问已经由内核驱动程序控制的设备。使用此标志是危险的，它会严重混淆相关的内核驱动程序。它还可能导致i2cdump返回无效的结果。所以，只有在你知道自己在做什么的情况下，才可以冒险使用</p>
-        <p>-r first-last 限制正在访问的寄存器的范围。这个选项只适用于b、w、c和W。并且W模式下第一个必须为偶数，最后一个必须为奇数</p>
-        <p>-y 同上，默认允许，脚本中最常见</p>
-        <p>-a 同上，-a参数使得使用者可以访问I2C总线预留的16个地址，一般情况下这16个地址在i2c spec上是有特殊用途的</p>
-        <p>PS：</p>
-        <p>i2cdump在使用不当的情况下十分危险的，尤其应该注意c模式，这个模式开始就会写入一个字节的数据到芯片上，大部分的情况下，这个写的数据会被存储在指地址指针寄存器中，并没有真正的写入到数据中，这种情况下是没有问题的，但是对一些具有单个寄存器或是没有寄存器的芯片来说，这种写的操作是一种真正地写入操作，是很危险的，从而导致错误行为或损坏。需要尤其要注意</p>
-        <p>举例：</p>
-        <p>#在i2c总线9（软件编号为9，实际应该为10），i2c地址为0x50（七位地址）的器件上的所有寄存器的内容</p>
-        <p>i2cdump 9 0x50</p>
-        <p>#获取在i2c5上i2c地址为0x36的器件上，寄存器地址从0x00到0x30的内容</p>
-        <p>i2cdump -r 0x00-0x30 5 0x36</p>
-        <p>i2cset</p>
-        <p>i2cset用于设置通过i2c可见的寄存器</p>
-        <p>Usage：</p>
-        <p>i2cset [-f] [-y] [-m mask] [-r] [-a] i2cbus chip-address data-address [value] ... [mode]</p>
-        <p>i2cset -V</p>
-        <p>-V 同上</p>
-        <p>-f 同上，强制访问设备，即便设备正在被内核占用</p>
-        <p>-y 同上</p>
-        <p>-m mask </p>
-        <p>i2ctransfer </p>
-        <p>i2ctransfer用于将数据打包好发送写道指定i2cbus下i2c地址。</p>
-        <p>Usage：</p>
-        <p>i2ctransfer [-f] [-y] [-v] [-a] i2cbus desc [data] [desc [data]] ...</p>
-        <p>i2ctransfer -V</p>
-        <p>-f 同上，强制访问</p>
-        <p>-V同上版本</p>
-        <p>-y 同上</p>
-        <p>-v 打印读写详细信息，类似于ipmitool的-v</p>
-        <p>-a 同上</p>
-        <p>desc desc为一个或多个块，这个是由内核决定的，desc块的组成如下：</p>
-        <p>{r|w}<length_of_message>[@address]</p>
-        <p>{r|w}用于决定操作是读或是写</p>
-        <p><length_of_message>代表读或是写的数据字节数，该数据被解析为一个个的无符号int型数据，这个读或是写的字节是有最大长度的</p>
-        <p>[@address]  i2c 7bit 地址</p>
-        <p>data ：当操作为写时，后面几即为需要写入的数据，数据后可附上“=”，“+”，“-”几个运算，分别表示写入相同的数据，递增的数据和递减的数据</p>
-        <p>example:</p>
-        <p>i2ctransfer -y -f 11 w1@0x50 0x64 r8</p>
-        <p>#上述表示在i2c总线11上，i2c地址为0x50，寄存器地址为0x64上读8个字节的数据</p>
-        <p>i2ctransfer -y -f 11 w16@0x50 0x03 0x01+</p>
-        <p>#表示在上次表示在i2c总线11上，i2c地址为0x50，寄存器地址为0x03写入16个字节的数据，并且这16个字节的数据是从0x01递增（0x1,0x02 ......）</p>
-        <p>PS：</p>
-        <p>:::danger
-        i2ctracsfer的应用场景往往是某一个寄存器的读值需要先写，然后才能正确的对应的值，比如：</p>
-        <p>BMC在点灯的时候回去读下面的寄存器：</p>
-        <!-- 这是一张图片，ocr 内容为：寄存器0X91:获取硬盘状态 时序框图: STOP READ NRITE REGISTER ADDRESS OFFSET DEVICE ADDRESS DEVICE ADDRESS DATA **001 水水水水0 兴兴兴兴兴兴兴兴会 0 水水 水 水 头 水水水 PEY 0X91+偏移地址(1BYTE)3返回1BYTE数据:硬盘序号作为偏移地址.如0X05表示HDD05; (表中各状态位,置1有效) 9 5 2 BIT 0 PREDICTIVE FAIL FAIL REBUILD WARNING IDLE/ACT PRESENT LOCATE 注1: 硬盘不在位 [BIT5:BIT4]PRESENT SAS/SATA硬盘在位 BIT5:BIT4]PRESENT01 NVME硬盘在位 BIT5:BIT4]PRESENT 11 -->
-        <p><img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1746524338008-e1f3fe01-0ad0-461e-8d36-f193620a491f.png" alt=""></p>
-        <p><strong>上面需要先往0x91寄存器先去写 需要读到的硬盘的偏移地址，再去读取0x91读取值，所以常见的应用场景是先往一个控制寄存器去写需要读取的信息的地址，然后控制寄存器自动去拿到读值后写到该控制寄存器的地址中，然后我们再去读，并且上述情形一般必须先写再去读，如果直接去读取的话的值往往和实际对应不上，因为这种控制寄存器一般会有一个默认值，在去写控制寄存器的值之后的短暂时间内存放的是实际需要读到的值，这之后就会恢复默认值，此时的值并非真正需要读取的值，以上图为例，实际的环境下的动作为：</strong></p>
-        <p><strong>i2cset -f -y 1 0x65 0x91 0x02 &amp;&amp;  i2cget -f -y 1 0x65 0x91</strong></p>
-        <p><strong>可以直接用一个命令i2ctransfer -f -y 1 w2@0x65 0x91 0x02 r1来代替；</strong></p>
-        <p><strong><font style="color:#DF2A3F;">要注意这里的w2表示的是写入两个数据即0x91 和0x02，但是实际分析的时候却是仅仅写了一个数据0x02，在 I2C 通信里，向设备的指定寄存器写入数据时，通常要分两步走：首先指定目标寄存器的地址，接着再写入具体的数据。所以，虽然表面上看你只是要写入一个数据 </font></strong><code>**&lt;font style=&quot;color:#DF2A3F;&quot;&gt;0x02&lt;/font&gt;**</code><strong><font style="color:#DF2A3F;">，但实际上在 I2C 操作过程中会涉及两个字节的数据传输，这就是使用 </font></strong><code>**&lt;font style=&quot;color:#DF2A3F;&quot;&gt;w2&lt;/font&gt;**</code><strong><font style="color:#DF2A3F;"> 的原因。</font></strong></p>
-        <p><strong>所以仅有i2ctransfer命令需要注意wX的X表示 写入数据数量 是包含寄存器地址的数据的</strong></p>
-        <hr>
-        <p>i2ctransfer -y -f 11 w1@0x50 0x64 r1</p>
-        <p>上述的w1表示写一个数据也仅仅是寄存器地址，并没有实际去往寄存器写值，故等同于i2cget -f -y 11 0x50 0x64</p>
-        <p>:::</p>
-
-
-    </div>
-
-    <script src="../../styles/article/article.js"></script>
+    </script>
 </body>
 </html>
