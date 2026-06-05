@@ -2,18 +2,19 @@
 // 文章数据
 // ==============================
 const articles = [
-    { title: "I2C tool的使用", desc: "作为实际应用中最常见的工具，如何优雅得使用？", path: "/article/1/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章2", desc: "描述2", path: "/article/2/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章3", desc: "描述3", path: "/article/3/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章4", desc: "描述4", path: "/article/4/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章5", desc: "描述5", path: "/article/5/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章6", desc: "描述6", path: "/article/6/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章7", desc: "描述7", path: "/article/7/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章8", desc: "描述8", path: "/article/8/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章9", desc: "描述9", path: "/article/9/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章10", desc: "描述10", path: "/article/10/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章11", desc: "描述11", path: "/article/11/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    { title: "文章12", desc: "描述12", path: "/article/12/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "I2C tool的使用", desc: "作为实际应用中最常见的工具，如何优雅地使用？", path: "./article/article1/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    { title: "BMC基础通信D-BUS编码规范", desc: "BMC 固件基于OpenBMC框架进行开发与演进。OpenBMC 以 systemd 及其管理的各类服务为核心，构建了完整的服务器管理与监控体系。系统中，每个服务均以独立进程的形式在后台运行。为了实现各服务之间的数据交互与协同，OpenBMC需要借助进程间通信(IPC)机制来完成信息传递。", path: "./article/article2/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章2", desc: "描述2", path: "/article/2/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章3", desc: "描述3", path: "/article/3/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章4", desc: "描述4", path: "/article/4/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章5", desc: "描述5", path: "/article/5/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章6", desc: "描述6", path: "/article/6/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章7", desc: "描述7", path: "/article/7/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章8", desc: "描述8", path: "/article/8/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章9", desc: "描述9", path: "/article/9/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章10", desc: "描述10", path: "/article/10/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章11", desc: "描述11", path: "/article/11/index.html", cover: "https://picsum.photos/400/300?random=1" },
+    // { title: "文章12", desc: "描述12", path: "/article/12/index.html", cover: "https://picsum.photos/400/300?random=1" },
   ];
   
   // ==============================

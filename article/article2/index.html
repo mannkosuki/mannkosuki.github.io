@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMC基础通信与D-Bus编码规范 - 不动声色的小站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --text-color: #333;
+            --text-secondary: #555;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --code-bg: #f8f9fa;
+            --header-bg: #8e8e8e;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8; color: var(--text-color); background: var(--bg-color); font-size: 15px;
+        }
+        .article-header {
+            position: relative; height: 380px; background: var(--header-bg);
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; color: white; overflow: hidden;
+        }
+        .header-bg-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; opacity: 0.2;
+        }
+        .header-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+        }
+        .header-content { position: relative; z-index: 2; max-width: 900px; padding: 0 30px; }
+        .article-title {
+            font-size: 2.2rem; font-weight: 700; margin-bottom: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4); line-height: 1.4; letter-spacing: 1px;
+        }
+        .article-meta {
+            font-size: 0.9rem; opacity: 0.85; display: flex;
+            justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .article-meta .separator { opacity: 0.5; font-weight: 300; }
+        .article-container {
+            max-width: 1200px; margin: 0 auto; padding: 50px 40px;
+            background: var(--card-bg); min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 1.9rem; color: var(--primary-color); margin: 50px 0 25px 0;
+            padding-bottom: 12px; border-bottom: 3px solid var(--accent-color);
+            text-align: center; font-weight: 700;
+        }
+        h1:first-of-type { margin-top: 10px; }
+        h2 {
+            font-size: 1.5rem; color: var(--primary-color); margin: 40px 0 20px 0;
+            padding-bottom: 8px; border-bottom: 2px solid #ecf0f1; font-weight: 600;
+        }
+        p { margin-bottom: 16px; text-align: justify; color: var(--text-secondary); line-height: 1.9; }
+        ul, ol { margin: 12px 0; padding-left: 24px; }
+        li { margin-bottom: 8px; color: var(--text-secondary); line-height: 1.8; }
+        li > ul, li > ol { margin-top: 6px; margin-bottom: 6px; }
+        .principle-section {
+            display: flex; gap: 35px; margin: 25px 0 35px 0; align-items: flex-start;
+        }
+        .principle-title {
+            flex: 0 0 32%; position: sticky; top: 25px; align-self: flex-start;
+        }
+        .principle-title h3 {
+            font-size: 1.05rem; color: var(--primary-color); font-weight: 600; line-height: 1.5;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            padding: 16px 18px; border-left: 4px solid var(--accent-color);
+            border-radius: 0 6px 6px 0; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin: 0;
+        }
+        .principle-content { flex: 1; min-width: 0; }
+        .principle-content ul { margin: 0; padding-left: 20px; }
+        .principle-content li { margin-bottom: 6px; }
+        .principle-content li > ul { margin-top: 4px; }
+        h3:not(.principle-title h3) {
+            font-size: 1.2rem; color: #34495e; margin: 25px 0 15px 0; font-weight: 600;
+        }
+        img {
+            max-width: 100%; height: auto; display: block; margin: 20px auto;
+            border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        pre {
+            background: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 18px 20px; overflow-x: auto; margin: 20px 0;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            font-size: 0.82rem; line-height: 1.7; color: #333;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            background: #f0f0f0; padding: 2px 6px; border-radius: 4px;
+            font-size: 0.88em; color: #c7254e;
+        }
+        pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+        table {
+            width: 100%; border-collapse: collapse; margin: 25px 0;
+            font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: 6px; overflow: hidden;
+        }
+        th, td {
+            border: 1px solid var(--border-color); padding: 14px 16px;
+            text-align: left; vertical-align: top;
+        }
+        th { background: #f8f9fa; font-weight: 600; color: var(--primary-color); font-size: 0.95rem; }
+        tr:nth-child(even) { background: #fafbfc; }
+        tr:hover { background: #f5f7fa; }
+        a { color: var(--accent-color); text-decoration: none; transition: color 0.2s; }
+        a:hover { text-decoration: underline; color: #2980b9; }
+        blockquote {
+            border-left: 4px solid var(--accent-color); margin: 20px 0;
+            padding: 12px 20px; background: #f8f9fa; color: #666;
+            font-style: italic; border-radius: 0 6px 6px 0;
+        }
+        .img-error {
+            text-align: center; color: #e74c3c; padding: 20px;
+            background: #fdf2f2; border-radius: 6px; margin: 10px 0; font-size: 0.9rem;
+        }
+        .ps-note {
+            background: #fffbeb; border-left: 4px solid #f59e0b;
+            padding: 15px 18px; margin: 15px 0;
+            border-radius: 0 6px 6px 0; font-size: 0.92rem; color: #92400e;
+        }
+        .ps-note ol { padding-left: 20px; margin: 0; }
+        .ps-note li { margin-bottom: 8px; color: #92400e; }
+        @media (max-width: 968px) {
+            .principle-section { flex-direction: column; gap: 12px; }
+            .principle-title { position: static; flex: none; width: 100%; }
+            .principle-content { flex: none; width: 100%; }
+            .article-title { font-size: 1.7rem; }
+            .article-container { padding: 35px 25px; }
+        }
+        @media (max-width: 600px) {
+            .article-header { height: 280px; }
+            .article-title { font-size: 1.3rem; }
+            .article-meta { font-size: 0.75rem; gap: 8px; }
+            .article-container { padding: 25px 18px; }
+            h1 { font-size: 1.4rem; }
+            h2 { font-size: 1.2rem; }
+            .principle-title h3 { font-size: 0.95rem; padding: 12px 14px; }
+            pre { padding: 14px 16px; font-size: 0.75rem; }
+            table { font-size: 0.82rem; }
+            th, td { padding: 10px 12px; }
+        }
+        html { scroll-behavior: smooth; }
+        ::selection { background: rgba(52, 152, 219, 0.2); color: var(--primary-color); }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <header class="article-header">
+        <div class="header-bg-img" style="background-image: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200');"></div>
+        <div class="header-overlay"></div>
+        <div class="header-content">
+            <h1 class="article-title">BMC基础通信方式与D-Bus编码规范</h1>
+            <div class="article-meta">
+                <span>发表于 2024-05-14</span>
+                <span class="separator">|</span>
+                <span>更新于 2024-05-14</span>
+                <span class="separator">|</span>
+                <span>字数总计: 8.6k</span>
+                <span class="separator">|</span>
+                <span>阅读时长: 28分钟</span>
+            </div>
+        </div>
+    </header>
+    <div class="article-container">
+
+        <h1>BMC基础通信方式</h1>
+        <p>自研 BMC 固件基于OpenBMC框架进行开发与演进。OpenBMC 以 systemd 及其管理的各类服务为核心，构建了完整的服务器管理与监控体系。系统中，每个服务均以独立进程的形式在后台运行。为了实现各服务之间的数据交互与协同，OpenBMC需要借助进程间通信(IPC)机制来完成信息传递。</p>
+
+        <h2>1.1 BMC常见 IPC 通信方式</h2>
+        <p>在BMC中，常见的进程间通信机制主要包括以下几类:</p>
+
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:18%">通信机制</th>
+                    <th style="width:42%">特点与说明</th>
+                    <th style="width:40%">OpenBMC中的使用情况</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>D-BUS</strong></td>
+                    <td>高层次、面向对象的消息总线机制，支持信号、方法调用与属性访问，特点是一致性、动态性、解耦。</td>
+                    <td>几乎所有服务（传感器、日志、用户管理、电源控制等）均通过D-BUS实现跨进程数据交换与事件通知。</td>
+                </tr>
+                <tr>
+                    <td><strong>SHARED MEMORY</strong></td>
+                    <td>高带宽低延时IPC方式，多进程可直接访问同一段内存区域；需配合同步机制（如信号量或互斥锁）使用。</td>
+                    <td>OpenBMC主体中几乎未使用此机制，主要原因是D-BUS提供了更高层的抽象与隔离；部分视频处理如VNC或KVM数据传输以及大块数据传输场景下使用。</td>
+                </tr>
+                <tr>
+                    <td><strong>UDS</strong></td>
+                    <td>本地进程间基于SOCKET的双向通信方式，支持面向流或数据报模式，可靠且灵活。</td>
+                    <td>OpenBMC部分组件（如 OBMC-CONSOLE）串口重定向使用该机制进行本地通信。</td>
+                </tr>
+                <tr>
+                    <td><strong>PIPE/FIFO</strong></td>
+                    <td>单向通信机制，适用于父子进程之间的简单数据传输，数据以字节流形式传递。</td>
+                    <td>使用场景有限，主要用于部分基础脚本或SYSTEMD单元在启动过程中传递少量数据，以及进程间非结构化命令消息的传递。</td>
+                </tr>
+                <tr>
+                    <td><strong>SIGNAL</strong></td>
+                    <td>轻量级异步通知机制，用于进程间或内核向进程发送事件通知（尤其是控制事件）。</td>
+                    <td>OpenBMC 中用于进程生命周期控制，子进程状态通知以及进程异常处理（看门狗）。</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h2>1.2 BMC基础通信方式选型原则</h2>
+        <p>在开发过程中，需要根据BMC实际使用场景的不同进行IPC通信方式选型。原则如下:</p>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>原则1.2.1 当需要明确接口语义、支持动态发现及发布-订阅通知机制时，优先使用D-Bus</h3>
+            </div>
+            <div class="principle-content">
+                <ul>
+                    <li><strong>优势：</strong>接口规范化、本地RPC以及发布订阅事件通知(Signal)支持。</li>
+                    <li><strong>OpenBMC应用示例：</strong>
+                        <ul>
+                            <li>dbus-sensor服务通过D-Bus发布传感器状态变化。</li>
+                            <li>phosphor-sel-logger订阅D-Bus信号记录系统事件日志</li>
+                            <li>bmcweb、ipmi、snmp作为消费者进行D-Bus 调用以及属性获取设置</li>
+                            <li>phosphor-software-manager通过订阅路径下对象添加信号，来动态创建固件升级D-Bus</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>原则1.2.2 当需要进行大块数据传输读取或低延迟要求时使用共享内存</h3>
+            </div>
+            <div class="principle-content">
+                <ul>
+                    <li><strong>优势：</strong>零拷贝、高性能、支持大块数据并发读写</li>
+                    <li><strong>OpenBMC应用示例：</strong>
+                        <ul>
+                            <li>视频或图像帧缓存（如VNC服务获取视频帧时，采用mmap映射共享缓冲区）。</li>
+                            <li>生产者-消费者模式的数据高速传递（G50共享内存SensorUpdate）。</li>
+                            <li>固件验签时候，采用mmap映射签名以及固件文件至进程虚拟内存空间。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>原则1.2.3 当需要高频、低延迟字节流通信尤其是代理转发场景时使用 UDS</h3>
+            </div>
+            <div class="principle-content">
+                <ul>
+                    <li><strong>优势：</strong>延迟低、可传输连续字节流、支持server/client多客户端转发</li>
+                    <li><strong>OpenBMC应用示例：</strong>
+                        <ul>
+                            <li>obmc-console server与client间通过UDS转发Host串口数据。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>原则1.2.4 当需要进程间非结构化消息单向传递时使用管道</h3>
+            </div>
+            <div class="principle-content">
+                <ul>
+                    <li><strong>优势：</strong>简单轻量，适合父子进程间少量数据传递</li>
+                    <li><strong>OpenBMC应用示例：</strong>
+                        <ul>
+                            <li>简单命令的传递，例如cpld固件升级时单向传递指令。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>原则1.2.5 当需要进程级中断控制事件时使用Linux信号</h3>
+            </div>
+            <div class="principle-content">
+                <ul>
+                    <li><strong>优势：</strong>
+                        <ul>
+                            <li>轻量、开销低，适合快速通知事件或状态变化。</li>
+                            <li>适合单向事件通知，无序列化开销。</li>
+                        </ul>
+                    </li>
+                    <li><strong>与D-Bus信号的区别：</strong>
+                        <ul>
+                            <li>D-Bus信号适合结构化事件、方法调用或状态发布。</li>
+                            <li>D-Bus信号可以有多个订阅者，而Linux信号需要指定PID。</li>
+                            <li>Linux信号更适合本地进程间快速、低延迟通知，不适合传输复杂对象。</li>
+                            <li>Linux信号通常用于触发处理动作，而D-Bus信号用于广播事件或状态信息。</li>
+                        </ul>
+                    </li>
+                    <li><strong>OpenBMC应用示例：</strong>
+                        <ul>
+                            <li>父子进程状态通知，例如守护进程通过SIGCHLD捕获子进程退出。</li>
+                            <li>服务控制，例如systemd启动或停止BMC服务时使用SIGTERM。</li>
+                            <li>异常处理，例如捕获SIGSEGV或SIGABRT生成日志或core dump。</li>
+                            <li>phosphor-watchdog 监听 SIGINT 以及 SIGTERM信号，用于确保退出前能正确释放资源。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <p>综上所述，管道、共享内存以及UDS只是在openBMC的一些特殊场景下作为进程间通信手段而D-Bus才是BMC中核心的进程间通信机制，需要针对其使用定制使用规范。</p>
+
+        <h1>D-Bus编码规范</h1>
+        <p>DBUS开发规范主要涵盖四大核心模块：总线连接、方法调用、信号处理及协程调用。本规范基于sdbusplus库实践总结，旨在：</p>
+        <ul>
+            <li>统一开发流程与编码标准；</li>
+            <li>规避常见设计缺陷；</li>
+            <li>给出符合规范的D-Bus使用例程，供使用者参考；</li>
+        </ul>
+
+        <h2>总线连接</h2>
+        <p>在OpenBMC系统中，systemd/sd-bus 依赖于底层的D-Bus消息总线服务，该服务可能由不同的Linux发行版使用不同的后端实现，例如dbus-broker (BMC)或dbus-daemon。无论使用哪种实现，它们本质上都是作为后台守护进程运行的虚拟总线。</p>
+        <p>所有需要通过D-Bus传递的消息，都会先发送到该后台守护进程，由它负责根据路径信息将消息路由至目标服务。因此，每一个希望使用D-Bus服务的OpenBMC进程，必须首先与该后台守护进程建立连接，即创建一条通往dbus-broker(或dbus-daemon)的总线连接。</p>
+        <p>sdbusplus是一个基于systemd/sd-bus 的C++封装库，主要提供以下功能：</p>
+        <ul>
+            <li>dbus相关签名、调用自动类型推导；</li>
+            <li>Boost事件循环集成配 systemd/sd-bus；</li>
+            <li>Boost异步调用模型的dbus适配支持；</li>
+            <li>基于sdbusplus的D-Bus 总线连接创建应遵循以下原则：</li>
+        </ul>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>优先使用 sdbusplus::asio::connection 创建连接</h3>
+            </div>
+            <div class="principle-content">
+                <p>sdbusplus提供了 <code>sdbusplus::asio::connection</code> 类封装了总线连接创建、异步调用以及基于连接的boost 事件循环逻辑。connection类继承于sdbusplus::bus_t类，故而包含bus_t类中的所有 public 以及 protect 方法与元素。bus_t类对 systemd/sd-bus库中接口进行了封装作为基础接口，创建连接时应使用其上层封装connection类而不是基础接口。</p>
+                <pre><code>#include &lt;sdbusplus/asio/aonnection.hpp&gt;
+#include &lt;boost/asio/io_context.hpp&gt;
+
+// 创建上下文
+boost::asio::io_context io;
+
+// 创建总线连接
+auto con = std::make_shared&lt;sdbusplus::asio::connection&gt;
+            (io, sdbusplus::bus::new_system());
+
+int main()
+{
+  con-&gt;doSomeThing();
+  return 0;
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>禁止使用connection默认构造，需要指明bus类型</h3>
+            </div>
+            <div class="principle-content">
+                <p>connection默认构造使用 <code>sdbusplus::bus::new_default()</code> 来构造bus对象，new_default()会创造一个共享的bus对象，其内部指向systemd中同一个sd-bus结构体，该sd-bus结构体包含dbus底层的套接字以及输入/输出缓存区。</p>
+                <p>如果多个连接共享同一个bus，在多线程并行访问时可能发生底层数据竞争，从而导致coredump。因此，应显式选择bus的构造方法：</p>
+                <ul>
+                    <li>在单线程、单连接场景下，使用new_default是安全的。</li>
+                    <li>在多线程多连接或单io多连接场景下，应使用new_system。</li>
+                </ul>
+                <p>工程师应根据具体使用场景选择合适的构造方式，以避免并发访问问题。</p>
+                <pre><code>boost::asio::io_context io1;
+// 单io 创建多连接时，若使用new_default()构建bus会导致指向同一个sd-bus
+auto con1 = std::make_shared&lt;sdbusplus::asio::connection&gt;
+              (io1, sdbusplus::bus::new_system());
+auto con2 = std::make_shared&lt;sdbusplus::asio::connection&gt;
+              (io1, sdbusplus::bus::new_system());</code></pre>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>使用智能指针管理connection连接</h3>
+            </div>
+            <div class="principle-content">
+                <p>sdbusplus是对 systemd/sd-bus 原生C接口的C++封装。在原始C版本中，工程师需要通过手动调用 <code>sd_bus_ref()</code> 和 <code>sd_bus_unref()</code> 等函数来维护引用计数，以确保连接的正确释放与重用。</p>
+                <p>sdbusplus 利用C++的构造与析构机制，实现了基于RAII(Resource Acquisition Is Initialization)的资源自动管理。工程师在使用过程中无需显式申请或释放资源，从而显著降低了内存泄露与资源泄漏的风险。</p>
+                <p>然而，这种自动释放机制也带来潜在隐患：若对象生命周期控制不当，可能在作用域结束时触发析构，提前释放底层sd_bus资源，导致use-after-free(悬垂引用)等严重问题。</p>
+                <p>因此，在工程实践中应遵循以下原则：</p>
+                <ul>
+                    <li>使用智能指针（如std::shared_ptr或std::unique_ptr）管理 connection对象的生命周期；</li>
+                    <li>明确连接对象的生存范围，避免其作为局部变量在函数退出时被意外析构；若无共享需求，应优先使用unique_ptr；若需跨作用域观察状态，可使用weak_ptr；</li>
+                    <li>在多线程或异步场景中，确保连接在所有相关任务完成前保持有效，必要时通过引用计数延长生命周期。</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>异步调用应使用weak指针管理this指针</h3>
+            </div>
+            <div class="principle-content">
+                <p>在类的成员函数中使用Lambda表达式进行异步调用时，应避免直接捕获或传递this指针。异步任务可能在对象销毁后才被调度执行，此时若捕获了悬空的this指针，将导致未定义行为或段错误。</p>
+                <p>正确的做法是：</p>
+                <ul>
+                    <li>令类继承自 <code>std::enable_shared_from_this</code>；</li>
+                    <li>使用 <code>auto weakRef = std::weak_ptr&lt;ClassType&gt;(shared_from_this());</code> 获取this指针；</li>
+                    <li>在Lambda表达式中通过 <code>auto self = weakRef.lock();</code> 检查对象有效性后再访问其成员。</li>
+                    <li>此模式可确保异步回调仅在对象仍然存活时执行，避免悬空引用问题，是编写安全异步代码的推荐实践。</li>
+                </ul>
+                <pre><code>void HwmonTempSensor::setupRead()
+{
+  if (!readingStateGood())
+  {
+    markAvailable(false);
+    updateValue(std::numer_limits&lt;double&gt;::quiet_NaN());
+    restartRead();
+    return;
+  }
+
+  std::weak_ptr&lt;HwmonTempSensor&gt; weakRef = weak_from_this();
+
+  inputDev.async_read_some_at(
+    0, boost::asio::buffer(readBuf),
+    [weakRef](const boost::system::error_code&amp; ec, std::size_t buteRead) {
+      // 从弱引用对象中获取this指针
+      std::shared_ptr&lt;HwmonTempSensor&gt; self = weakRef.lock();
+      // 检查this指针是否存在，防止use after free
+
+      if (self)
+      {
+        self-&gt;handleReponse(ec, byteRead);
+      }
+    }
+  )
+}</code></pre>
+                <div class="ps-note">
+                    <ol>
+                        <li><strong>enable_shared_from_this 的作用：</strong>简单来说如果类的成员函数在使用到了this指针时，加了enable_shared_from_this的话，在使用weak_from_this()获取this指针时 会询问 外面是否有人在管理我当前的实例化的类，如果有则安全生成生成指向当前实例化类的指针，如果否则抛出异常。如果没有enable_shared_from_this，那么在内部使用this时是感知不到外部使用有人管理，如果没有生命周期下盲目使用this会引发异常</li>
+                        <li>这一般会在异步调用会使用到，因为异步调用如果使用到了this指针就必须需要了解this指针是否未被释放，如为同步则无此要求，因为同步调用，说明实例化的类必然仍然有效</li>
+                        <li>关于第一点的补充说明：会询问 外面是否有人在管理我当前的实例化的类，其实就是类的实例化方式不同，如上HwmonTempSensor类，如为HwmonTempSensor temp，则不存在外部管理，如为：auto temp = make_shared&lt;HwmonTempSensor&gt;，则表明确实有外部管理</li>
+                        <li><strong>weak_ptr是弱引用，</strong>即他一般是不会增加引用计数的，如果在成员函数中用到异步，且无需延长对象生命周期一般在成员函数内部用weak_ptr，如需延长对象的生命周期则会使用shared_ptr</li>
+                        <li>综上 如标题所示 异步调用应使用weak指针管理this指针</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>连接应长期持有，避免局部变量导致早析构</h3>
+            </div>
+            <div class="principle-content">
+                <p>sdbusplus::asio::connection 构造时会初始化底层 sd_bus 并注册 fd到事件循环。如果该对象以局部变量形式存在，其作用域结束时会立即析构并注销连接，可能引发use-after-free或消息丢失。</p>
+                <p><strong>如下为错误示例：</strong></p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780455863624-f517597b-580c-416f-bc3d-0026b219c532.png" alt="错误示例：局部变量导致早析构" referrerpolicy="no-referrer">
+                <p>io和conn都是局部变量，函数跑完就直接销毁了，中间的异步调用直接异常</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>连接创建失败时应捕获异常</h3>
+            </div>
+            <div class="principle-content">
+                <p>构造sdbusplus::asio::connection可能因权限、总线不可达等问题抛出异常。可以使用try-catch捕获错误从而方便后续bug定位。</p>
+                <pre><code>try
+{
+  auto conn - std::make_shared&lt;sdbusplus::asio::connection&gt;(io);
+}
+catch (const std::exception&amp; e)
+{
+  std::cerr &lt;&lt; "Failed to create D-bUS connetion "
+    &lt;&lt; e.what() &lt;&lt; std::endl;
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>禁止多线程使用同一连接，若无必要禁止使用多线程进行D-Bus 调用</h3>
+            </div>
+            <div class="principle-content">
+                <p>多线程使用同一个连接会导致资源竞争。connection本质上是对systemd/sd-bus的封装，而sd-bus并非为多线程并行设计，其多数方法线程不安全。因此，在多线程环境下共享同一个连接极易导致coredump(详见GitHubIssue#31589)。</p>
+                <p>需要注意的是，sdbusplus在设计时也未考虑多线程调用D-Bus的问题，作者已明确指出。实际上，sdbusplus处理D-Bus消息基于事件循环，即使存在应用层的并发调用，底层处理逻辑仍是顺序执行的。因此，多线程调用D-Bus并无实际意义，也存在较高风险。</p>
+                <pre><code>#include &lt;sdbusplus/asio/connection.hpp&gt;
+#include &lt;boost/asio/io_context.hpp&gt;
+#include &lt;thread&gt;
+#include &lt;ipstream&gt;
+
+void sendRequest(std::shared&lt;sdbusplus::asio::connection&gt; conn)
+{
+  // 假设异步调用某个方法
+  conn-&gt;async_method_call(
+    [boost::system:error_code ec, const std::string&amp; reply] {
+      if (ec)
+      {
+        std::cerr &lt;&lt; "Async call failed: " &lt;&lt; ec.message() &lt;&lt; std::endl;
+      }
+      else
+      {
+        std::cout &lt;&lt; "Got reply: " &lt;&lt; reply &lt;&lt;std::endl; 
+      }
+    },
+    "xyz.openbmc_project.Example",
+    "/xyz/openbmc_project/Example",
+    "xyz.openbmc_project.Example",
+    "Echo",
+    "Hello"
+  )
+}
+
+int main()
+{
+  auto io_ptr = std::make_shared&lt;boost::asio::io_context&gt;();
+  auto conn = std::make_shared&lt;sdbusplus::asio::connection&gt;(*io_ptr);
+
+  // 错误用法；多个线程同时操作同一个connection
+  // connection 内部封装了sd_bus 对象（非线程安全），直接使用bus对象原理一致也会导致coredump
+  // 不同线程同时访问会导致数据竞争，Bad message 崩溃或double free
+
+  std::thread worker([conn, io_ptr]() {
+    sendRequest(conn);
+    io_ptr-&gt;run(); // 子线程事件循环
+  });
+
+  io_ptr-&gt;run(); // run 阻塞，子线程无法正常join
+  return 0;
+}</code></pre>
+            </div>
+        </div>
+
+        <h2>方法调用</h2>
+        <p>D-Bus 中存在四种类型消息，分别为 METHOD_CALL、METHOD_RETURN、SIG-NAL 以及 ERROR, 其中 METHOD_CALL、METHOD_RETURN 两种消息类型实现了D-Bus 中的本地 RPC 调用，允许客户端通过连接的Well-Known Name、Path 以及接口定位到本地另外一个服务端进程中的方法，通过发送METHOD CALL消息调用远程方法，调用后的返回消息为METHODRETURN。</p>
+        <p>sdbusplus提供了对D-Bus方法调用的封装，支持同步调用与异步调用两种方式：</p>
+        <ul>
+            <li><strong>同步方法调用：</strong>在等待METHOD_RETURN消息到达期间，IO线程会处于阻塞状态，无法处理其他事件循环中的任务。这种方式适用于对响应时间要求不敏感、逻辑简单的场景。</li>
+            <li><strong>异步方法调用：</strong>采用回调机制处理METHO_DRETURN消息。每次异步调用发起后，会将事件注册到操作系统的epoll中，立即返回，不会阻塞当前线程。只有当返回消息到达并触发epoll事件后，才会执行预设的回调函数进行响应处理。</li>
+            <li><strong>协程方法调用：</strong>支持使用boost的有栈协程以及C++20的无栈协程，通过同步同步代码风格实现异步逻辑；</li>
+        </ul>
+        <p>sdbusplus方法调用应该满足以下原则：</p>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>优先使用 async_method_call实现异步方法调用</h3>
+            </div>
+            <div class="principle-content">
+                <p>异步方法调用具备非阻塞特性，适用于大多数事件驱动场景。通过将调用注册到epoll事件中，并在响应到达时触发回调，可有效避免主线程或I/O线程在等待响应过程中被阻塞，从而提升系统处理效率。</p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780537441817-ce253afd-3d63-4ca3-93fc-e531bc215909.png" alt="async_method_call接口说明" referrerpolicy="no-referrer">
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780537456093-6fe63927-5765-4720-af92-2bbe8e4b0dca.png" alt="async_method_call模板定义" referrerpolicy="no-referrer">
+                <p>async_method_call是连接对象的成员函数，其内部通过new_method_call构建消息，并由async_send实现异步发送流程。在需要自定义消息参数、签名或发送控制行为时，开发者也可以直接使用底层接口构造消息并调用async_send进行发送。这种方式与async_method_call机制本质一致，但提供更高的灵活性。例程如下：</p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780537526892-cd2039f5-f543-4655-8b88-8bb08fb10b60.png" alt="async_method_call使用示例" referrerpolicy="no-referrer">
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780537547800-817dc910-487f-44dd-8297-f51d2790b6f1.png" alt="基础接口使用示例" referrerpolicy="no-referrer">
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>避免在同一上下文中混用同步与异步调用</h3>
+            </div>
+            <div class="principle-content">
+                <p>在同一上下文中混合使用同步与异步的D-Bus方法调用，可能导致事件循环阻塞、回调顺序错乱等问题。建议在整个模块内保持一致的调用模式，优先采用异步调用机制，以避免非预期行为和潜在的资源竞争。</p>
+                <p>在sdbusplus中，异步调用是通过Boost.Asio事件循环来感知D-Bus 状态变化的，其内部通过poll()机制实现事件驱动。然而，当客户端在同一线程中发起同步D-Bus调用时，在调用call()方法的阻塞等待期间，Boost事件循环将无法感知新的D-Bus事件。这会带来以下潜在风险：</p>
+                <ul>
+                    <li><strong>死锁风险：</strong>同步调用会阻塞当前线程等待返回结果。若此时在同步调用回调中触发异步操作，或在异步操作的回调中再执行同步调用，可能导致线程间资源相互占用，引发死锁。</li>
+                    <li><strong>代码可读性与维护性下降：</strong>同步与异步混合使用会使调用流程非线性化，执行顺序难以追踪，调试时可能出现异步回调执行时机不确定的问题，从而破坏同步逻辑的预期顺序。</li>
+                    <li><strong>资源泄露风险：</strong>若异步操作的回调生命周期管理不当，而同步调用又长时间阻塞，可能导致连接未及时释放或内存泄漏。</li>
+                </ul>
+                <p>混合同步与异步调用往往会引发预期之外的行为，尤其当代码中同时存在信号Match与方法调用时。Match的回调是由事件循环驱动触发的，而若在此过程中执行同步调用(如call())，则原本应被Match捕获的可读事件可能被同步调用提前读取，从而导致信号丢失。</p>
+                <p><strong>错误示例如下所示：</strong></p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780537761850-c26fcf7e-20bf-4e1d-95ec-f6b486bc84fe.png" alt="Match与同步方法调用混用错误示例" referrerpolicy="no-referrer">
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780537779248-034fae94-989f-4177-a5a6-a8eb63e43611.png" alt="错误在一个连接上使用同步方法调用" referrerpolicy="no-referrer">
+                <p>如下所示，Boost事件循环通过read_wait感知底层文件描述符的状态变化。由于采用async_read_some从文件描述符中读取数据，当用户在注册方法调用时传入超时参数时会出现问题。原因在于事件驱动机制仅在文件描述符产生可读事件时才会触发sd_bus_process，从而导致底层的超时错误信息无法及时反馈到Boost层。换言之，只有在process被调用时，底层回调及超时处理才会被触发。简而言之，由于顶层Boost事件循环缺乏对超时状态的感知，导致超时事件未能得到及时处理。</p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780537882998-fc5d76c3-57e2-44b0-88ca-4345ebd8fec6.png" alt="Boost事件感知逻辑" referrerpolicy="no-referrer">
+                <p>复现此问题的代码以及 issue 见<a href="https://github.com/openbmc/sdbusplus/issues/98" target="_blank">https://github.com/openbmc/sdbusplus/issues/98</a>在最新的XcoreBMC3.0中sdbusplus 已经修复了这个问题(通过添加定时器、获取底层事件)。但此问题还存在于目前的G50以及G60代码中。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>openBMC服务初始化阶段允许使用同步调用</h3>
+            </div>
+            <div class="principle-content">
+                <p>首先需要明确，在OpenBMC服务的稳定运行过程中，混用同步与异步调用是一种错误的做法。</p>
+                <p>但有一种例外情况：在服务启动阶段，如果需要获取关键的初始化信息，可以使用同步调用获取数据。这样可以确保在服务正式运行前，必要信息已经准备就绪，从而保障服务的稳定性。</p>
+                <p>具体来说：</p>
+                <ul>
+                    <li>在服务启动初期，即异步机制尚未建立之前，可以使用同步调用获取数据，例如获取电源状态信息。</li>
+                    <li>使用同步调用时，可以保证数据在调用返回时已经获取到。</li>
+                    <li>后续服务运行阶段，应统一使用异步调用，以避免同步/异步混用带来的潜在问题。</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>禁止连续大量发起异步调用（单连接挂起上限为128）</h3>
+            </div>
+            <div class="principle-content">
+                <p>系统底层对同一D-Bus连接的挂起异步请求数量存在限制（通常为128个）。超过此数量的调用将被底层拒绝，或引发noavailable space错误。应使用调用队列、批处理控制或限速策略，避免一次性提交过多异步请求，确保连接稳定性。如下代码为错误示范（当times大于128时会超过最大挂起数量）：</p>
+                <pre><code>for (int i = 0;i &lt; times;i++)
+{
+  conn.async_method_call(
+    [i, times](boost::system::error_code ec, sdbusplus::message_t&amp; res){
+      if (ec)
+      {
+        std::cerr &lt;&lt; "[ERRIR] Async call #" &lt;&lt; i &lt;&lt; " failed " &lt;&lt; ec.message()
+          &lt;&lt; " (code: " &lt;&lt; ec.value() &lt;&lt; ")" &lt;&lt; std::endl;
+      }
+    },
+    "test.DBus.echo",
+    "/test/DBus/echo/server",
+    "test.DBus.echo",
+    "Echo",
+    "abc");
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>禁止在异步回调函数中执行阻塞或耗时操作</h3>
+            </div>
+            <div class="principle-content">
+                <p>异步回调函数运行在事件循环线程中，若在其中执行文件IO、sleep()、mutex锁等待等阻塞操作，会导致事件循环阻塞，进而影响其他异步任务的及时处理。应确保回调逻辑快速返回；对于必须执行的耗时任务，应通过线程池或任务队列进行异步调度。在实际BMC业务中，无论是基于sd-bus(systemd)还是sdbusplus，它们的消息接收与分发逻辑均依赖事件循环。当一个D-Bus信号或方法调用被接收时，事件循环会调用用户注册的回调函数执行对应的处理逻辑。若回调函数中包含长时间执行的逻辑（例如复杂业务计算、文件1/O或sleep()等），则会阻塞事件循环。在此期间，新到达的D-Bus消息无法被读取和处理（Socket数据将积压），其他等待调度的请求也无法执行。由于sd-bus底层通常设置了25秒超时，当请求长时间挂起时，调用方会收到org.freedesktop.DBus.Error.Timeout 错。</p>
+                <p>典型的OpenBMC服务端实现为单线程、纯异步模型。此模型下，事件循环线程负责所有I/O与信号分发，无法并发处理其他任务。一旦回调中出现阻塞操作，将直接导致整个I/O线程被阻塞，继而使后续的D-Bus调用超时。以下操作在回调函数中应当严格禁止：</p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780538583818-8274b061-70ee-4185-8cfb-47f021f35281.png" alt="回调中禁止的阻塞操作" referrerpolicy="no-referrer">
+                <p>在sdbusplus 与systemd的D-Bus架构中，信号回调函数通常在绑定的io_context或sd-bus消费线程中执行。若其中包含阻塞操作（如I/O、sleep、长时间计算或锁等待），将造成以下影响：</p>
+                <ul>
+                    <li>阻塞其他信号与方法调用的处理，显著增加系统延迟；</li>
+                    <li>高频信号场景下，回调堆积可能触发超时、消息丢失或Bad message；</li>
+                    <li>降低进程整体响应性，尤其在单线程io_context架构中影响明显。</li>
+                </ul>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780538639846-0fc75a73-2479-41c2-a14f-e86c8b0eece0.png" alt="错误示例：回调中执行阻塞操作" referrerpolicy="no-referrer">
+                <p>因此，异步回调应尽量保持轻量化，仅执行必要的数据解析与任务分发。对于耗时任务，应通过线程池、任务队列或独立异步任务执行，避免阻塞主事件循环线程。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>异步调用应绑定唯一回调函数，避免状态混淆</h3>
+            </div>
+            <div class="principle-content">
+                <p>在进行异步方法调用时，应为每个调用创建独立的回调处理逻辑或封装类，不应在多个调用中共享回调上下文对象（如捕获共享std::shared_ptr指向同一对象）。避免多次回调时状态被修改产生预期外行为。</p>
+                <pre><code>struct SharedContext
+{
+  int counter = 0;
+};
+
+auto context = std::make_shared&lt;SharedContext&gt;();
+for (int i = 0;i &lt; 3;i++)
+{
+  conn-&gt;async_method_call(
+    [context](boost::systemc::error_code ec, std::string reply){
+      if (!ec)
+      {
+        context-&gt;counter++;
+        std::cout &lt;&lt; "Reply: " &lt;&lt; reply &lt;&lt; ", Counter: " &lt;&lt; 
+          context-&gt;counter &lt;&lt; std::endl;
+      }
+    },
+    "com.example.Demo",
+    "com/example/Demo",
+    "com.example.DemoInterface",
+    "Echo",
+    std::string("Hello"));
+}</code></pre>
+                <p>程序中所有异步调用都捕获并共享了context对象，但是异步调用的触发事件与顺序都是不固定的，会导致context对象中状态被多个回调更改难以Debug追踪问题。简言之，代码需要保证异步调用预期结果可追踪，可调试避免多个异步回调更改同一对象状态。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>避免在回调中链式嵌套过深的异步调用</h3>
+            </div>
+            <div class="principle-content">
+                <p>异步回调中调用另一异步方法时（尤其是回调中可），应使用协程，避免出现嵌套过深导致的"回调地狱"，以提高可读性与可维护性。</p>
+                <p><strong>错误示例（回调地狱）：</strong></p>
+                <pre><code>conn-&gt;async_method_call(
+  [](boost::system::error_code ec1, std::string r1) {
+    if (!ec1) {
+      std::cout &lt;&lt; "Step 1: " &lt;&lt; r1 &lt;&lt; std::endl;
+
+      conn-&gt;async_method_call(
+        [](boost::system::error_code ec2, std::string r2) {
+          if (!ec2) {
+            std::cout &lt;&lt; "Step 2: " &lt;&lt; r2 &lt;&lt; std::endl;
+
+            conn-&gt;async_method_call(
+              [](boost::system::error_code ec3, std::string r3) {
+                if (!ec3) {
+                  std::coit &lt;&lt; "Step 3: " &lt;&lt; r3 &lt;&lt;std::endl;
+                  // 更多嵌套 ...
+                }
+              },
+              "svc",
+              "/path",
+              "iface",
+              "Method3");
+          }
+        },
+        "svc",
+        "/path",
+        "iface",
+        "Method2");
+    }
+  },
+  "svc", "/path", "iface", "Method1");</code></pre>
+                <p><strong>协程改进方案：</strong></p>
+                <pre><code>#include &lt;boost/asio/io_context.hpp&gt;
+#include &lt;boost/asio/spawn.hpp&gt;
+#include &lt;sdbusplus/asio/connection.hpp&gt;
+#include &lt;systemd/sd-hournal.h&gt;
+#include &lt;string&gt;
+
+int main()
+{
+  auto io = std::make_shared&lt;boost::asio::io_context&gt;();
+  auto conn = std::make_shared&lt;sdbusplus::asio::connection&gt;(*io);
+
+  boost::asio::spawn(*io, [conn](boost::asio::yoeld_context yield) {
+    try
+    {
+      boost::system::error_code ec;
+
+      // Step1 
+      std::string r1 = conn-&gt;yield_method_call&lt;std::string&gt;(
+        yield, ec, "svc", "/path", "iface", "Method1");
+
+      if (ec)
+      {
+        sd_journal_send("METHOD1_ERROR=%s", ec.message().c_str(),
+          "PROPERTY=%i", LOG_ERR, NULL);
+        return;
+      }
+
+      // Step 2
+      std::string r2 = conn-&gt;yield_method_call&lt;std::string&gt;(
+        yield, ec, "svc", "/path", "iface", "Method2");
+
+      if (ec)
+      {
+        sd_journal_send("METHOD2_ERROR=%s", ec.message().c_str(),
+          "PROPERTY=%i", LOG_ERR, NULL);
+        return;
+      }
+
+      //Step3
+      std::string r3 = conn-&gt;yoeld_method_call&lt;std::string&gt;(
+        yield, ec, "svc", "/path", "iface", "Method3");
+
+      if (ec)
+      {
+        sd_journal_send("METHOD3_ERROR=%s", ec.message().c_str(),
+          "PROPERTY=%i", LOG_ERR, NULL);
+        return;
+      }
+    }
+    catch (const std::exception &amp;e)
+    {
+      sd_journal_send("COROUTLINE_EXCEPTION=%s", e.what(),
+        "PROPERTY=%i", LOG_ERR, NULL);
+    }
+  });
+
+  io-&gt;run();
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>设计合理扇出的回调函数逻辑</h3>
+            </div>
+            <div class="principle-content">
+                <p>扇出是指一个函数直接调用（控制）其它函数的数目。扇出过大，表明函数过分复杂，需要控制和协调过多的下级函数；不利于程序阅读和函数结构分析，并且程序运行时会对系统资源如堆栈空间造成压力。另一方面，过高扇出即BMC中业务逻辑嵌套复杂，在例如bmcweb这样单线程、纯异步的程序中会造成DBus调用后回调执行时间过长，若此时存在多个挂起的DBus请求，那么其他DBus调用的回调执行将被延迟。通常回调函数比较合理的扇出（调度函数除外）通常维持在[0，3]区间之内。</p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780555139451-4b6b8f70-0151-4ea2-bdd5-8aaa3d648dac.png" alt="函数扇出示意图" referrerpolicy="no-referrer">
+                <p>如下为错误示例，回调函数中存在五个扇出。在实际项目中，这种风格的代码会导致回调执行耗时过长，同时降低代码可读性和可维护性，增加问题定位与优化的难度。如果五个扇出中的任意一个包含阻塞操作，更会加大调试难度。因此，应明确信号回调的功能仅用于通知，尽量与具体业务逻辑解耦。</p>
+                <pre><code>auto matcher = std::make_unique&lt;sdbusplus::bus::match_t&gt;(
+  *conn, matchRule, [](sdbusplus::message_t&amp; msg) {
+    // 扇出1
+    process1(msg);
+
+    // 扇出2
+    process2(msg);
+
+    // 扇出3
+    process3(msg);
+
+    // 扇出4
+    process4(msg);
+
+    // 扇出5
+    process5(msg);
+  });</code></pre>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>使用D-Bus 传输文件描述符防止Double Close</h3>
+            </div>
+            <div class="principle-content">
+                <p>D-Bus在类型系统中定义了专用类型h来表示UNIX_FD，因此可以在两个进程间通过D-Bus 传递文件描述符。在底层实现中，D-Bus通过控制消息(Cmsg)中的SCM_RIGHTS传递文件描述符，内核会增加对应structfile的引用计数，并在接收端创建该文件描述符的副本。</p>
+                <p>使用异步方法调用获取文件描述符的示例代码如下：</p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780555421023-f605d066-e1db-4615-b8fd-c7577b91d9d0.png" alt="D-Bus传递文件描述符示例" referrerpolicy="no-referrer">
+                <p>在D-Bus接收端，文件描述符是从消息对象(sd_bus_message)解码得到的。其生命周期由sd_bus_message管理，如果直接在回调中使用引用，当消息对象析构时该文件描述符会自动关闭(RAII机制)。若在回调函数中提前手动关闭该文件描述符，将导致 double close.</p>
+                <p>若需要持久化使用该文件描述符，并支持手动关闭，应通过dup系统调用创建文件描述符的副本。该操作是安全的，因为dup仅创建一个新的文件描述符指向同一内核文件对象。使用dup拷贝后，应显式关闭副本以防止文件描述符泄露。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>谨慎使用ObjectManager提供的遍历方法</h3>
+            </div>
+            <div class="principle-content">
+                <p>D-Bus 协议提供了标准接口 org.freedesktop.DBus.ObjectManager，其中定义了方法GetManagedObjects。该方法可遍历当前D-Bus 对象路径下的所有子路径，并获取每个子路径下的接口及其属性信息，常用于动态发现和枚举D-Bus对象。然而，该方法的缺点也十分明显：当子路径数量较多时，遍历过程会变得极其缓慢，因此在设计和使用时应谨慎评估其性能影响。通常使用该接口的根本原因在于"源头数据过于分散"。因此，建议在设计D-Bus接口时，将同类信息归纳到一个结构体中（D-Bus类型系统支持结构体类型），以减少对 ObjectManager 的依赖和调用次数。在OpenBMC中，许多软件包基于sdbusplus对此接口进行了不同形式的封装，但其底层逻辑实质相同。如下示例代码所示，本质上都是通过ObjectManager接口遍历子路径完成对象枚举。工程师在阅读或维护相关代码时，应能够识别并理解这类使用方式。</p>
+                <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780555512801-ed785e1e-a505-498b-b6fe-1f37903d845c.png" alt="使用ObjectManager遍历子路径示例" referrerpolicy="no-referrer">
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>禁止冗余D-Bus方法调用</h3>
+            </div>
+            <div class="principle-content">
+                <p>在设计和实现D-Bus通信逻辑时，应当避免多次重复的D-Bus方法调用，尤其是当一次调用即可满足业务需求时。过多的调用不仅会增加系统总线通信负载，还会引入不必要的上下文切换与延迟，在高频场景下甚至可能触发总线拥塞或响应超时。</p>
+                <ul>
+                    <li><strong>能合并的调用绝不拆分：</strong>若多个连续调用访问的是同一服务、同一对象路径下的不同属性或数据，应优先使用单一复合接口（例如批量获取接口、结构体返回值），此时可以考虑使用ObjectManager进行获取，以减少总线往返。</li>
+                    <li><strong>禁止循环中重复调用：</strong>在循环体中执行method_call是典型的反模式。应通过一次D-Bus调用获取完整数据后在本地进行处理。</li>
+                    <li><strong>设计阶段优化接口结构：</strong>若业务需求确实需要多字段访问，建议在接口层定义复合结构体类型(struct)，由一次调用返回全部必要信息，避免多次RPC。</li>
+                </ul>
+            </div>
+        </div>
+
+        <h2>信号释放与匹配接收</h2>
+        <p>DBus支持发布-订阅式的消息通信范式，其中信号的发送与匹配接收是实现这一机制的核心方式。一个进程可以通过发送信号来发布消息，dbus-broker守护进程则负责将该信号转发至所有已连接的客户端。其他进程若作为订阅方，则可通过设置匹配规则(matchrule)来接收特定的信号，从而实现对DBus消息的订阅。在实际应用中，合理配置匹配规则和信号发布策略对于降低系统开销和避免回调阻塞具有重要作用。</p>
+        <img src="https://cdn.nlark.com/yuque/0/2026/png/29657337/1780555631627-bff16ea5-a110-4f69-846e-e9c50b8178f5.png" alt="DBus发布订阅模式" referrerpolicy="no-referrer">
+        <p>DBus使用信号发布订阅的模式，需要遵守以下原则：</p>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>信号只用于事件通知</h3>
+            </div>
+            <div class="principle-content">
+                <p>信号应当仅用于表达"事件已经发生"的事实，而不应用于大批量数据传输或替代方法调用。信号是一种发布-订阅、单向、无应答的广播机制；而方法调用是点对点、请求-应答、带有错误码的机制。二者在语义和用途上有明确区分。</p>
+                <p>信号的典型场景是"通知其他进程某事件已发生"。至于事件关联的数据传递、处理逻辑，应通过方法调用或属性访问完成，而不是直接挤在信号里。信号不能作为大数据传输的手段，也不可替代方法调用使用。</p>
+                <p>需要注意的是，信号会被投递给所有订阅者。订阅者越多，解析与拷贝成本就会线性放大。信号采用"发出即走"语义，没有成功/失败回执，也缺乏流控与重试机制；而方法调用可以返回错误。信号没有"完成/拒绝"的概念，因此不适合作为请求-响应的手段。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>合理控制信号发布频率与接收端回调执行时间</h3>
+            </div>
+            <div class="principle-content">
+                <p>信号通过内核UNIX Socket传输。频繁发送会导致系统调用与上下文切换开销显著增加。接收端必须逐条解析信号，过高频率会造成CPU消耗和功耗上升，同时可能增加回调队列积压。</p>
+                <p>在接收端，match 对象的回调通常运行在systemd/sd_bus 的消费线程或其绑定的io_context线程中。openBMC中大多数进程为单线程模型，若回调函数执行过长，会阻塞其它消息的处理，引发整体延迟甚至超时。因此，回调应保持短小，将复杂逻辑移交至工作队列或线程池异步执行，以保证系统及时响应。</p>
+                <p>在发送端，应避免在属性值未发生变化时仍频繁发布相同信号（冗余更新）。对于高频场景，必须在服务端实现限流或聚合策略，例如"每N毫秒最多发布一次"或"仅在超过阈值变更时发布"。此外，建议在信号发布处增加统计计数，用于监控和调试发布速率，对每种关键信号导出指标（计数、最近N次时间戳），并在发布前后记录计数（内置counters），提供日志接口读取这些指标。这样可以在调试与运行时对信号发布行为进行可视化监控，有助于发现异常频率和潜在性能问题。</p>
+                <pre><code>class SignalPublisher
+{
+public:
+  SignalPublisher(std::shared_ptr&lt;sdbusplus::asio::connection&gt; conn,
+    boost::asio::io_context&amp; io)
+    : conn(conn), timer(io)
+    {
+      schedule();
+    }
+
+  private:
+    void schedule()
+    {
+      // 每200ms发一次信号
+      timer.expires_after(std::chrono::milliseconds(200));
+      timer.async_wait([this](const boost::system::error_code&amp; ec) {
+        if (!ec)
+        {
+          publish();
+          schedule(); // 调度下一次
+        }
+      });
+    }
+
+    void publish()
+    {
+      auto msg = conn-&gt;new_signal(
+        "xyz.openbmc_project/example",
+        "/xyz/openbmc_project/example",
+        "ValueChanged");
+
+      msg.append("Hello");
+      conn-&gt;send(msg);
+    }
+
+    std::shared_ptr&lt;sdbusplus::asio::connection&gt; conn;
+    boost::asio::steady_timer timer;
+}</code></pre>
+                <pre><code>/*Define all of the basic class operations:
+* Allowed:
+* - Default constructor
+* - Copy operations.
+* - Move operations.
+* - Destructor.
+*/
+
+int main()
+{
+  auto io = std::make_shared&lt;boost::asio::io_context&gt;();
+  auto conn = std::make_shared&lt;sdbusplus::asio::connection&gt;(*io);
+  // 按引用捕获，注意缓存生命周期；
+  vector&lt;sdbusplus::message::message&gt; replyCache;
+  sdbusplus::bus::match::match_t match(
+    *conn,
+    "type='signal',interface='org.example.Interface',member='Event'",
+    [&amp;replyCache](sdbusplus::message::message&amp; m) {
+      // 只缓存不做业务处理，也可以不做任何缓存（当信号频率过高）；
+      // 也可以通过计数器选择释放保存收到的信号内容；
+      replyCache.emplace_bak(std::move(m));
+    });
+
+  // 定时器周期性处理聚合数据
+  boost::asio::steady_timer timer(*io, std::chrono::mollseconds(100));
+  std::function&lt;void()&gt; periodic = [&amp;timer, &amp;replyCache](){
+    // 处理数据（按时间聚合数据），也可以选择数量聚合数据
+    doSomeThing(replyCache);
+    cleanUp(replyCache);
+    timer.expires_after(std::chrono::millseconds(100));
+    timer.async_wait([&amp;](auto){ periodic(); });
+  };
+  periodic();
+
+  io-&gt;run();
+}</code></pre>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>禁止冗余的属性变更信号发布</h3>
+            </div>
+            <div class="principle-content">
+                <p>在DBus服务端注册属性时，sdbusplus默认在该属性值发生变化时自动向系统总线发布PropertiesChanged信号。系统总线上所有match了该匹配规则的进程都会收到此信号，并立即执行其回调逻辑。</p>
+                <p>通常传感器数据更新时调用setProperty触发属性变更。底层数据更新频率直接决定了属性更新频率，也就决定了PropertiesChanged信号的发送频率。简而言之高频 set-Property 调用会引起高频PropertiesChanged信号发布导致高频回调触发。如果回调执行耗时（如IO、日志、复杂计算），在短时间内被多次触发，会导致接收端io_context线程阻塞。阻塞累积后，表现为消息处理延迟增加（信号堆积）以及CPU占用异常升高。故而需要避免冗余属性变更信号发布，仅在属性值真正变化时调用setProperty。也可以使用定时器进行更新，控制更新频率。对高频率传感器不应该直接使用setProperty，可以通过在服务端增加速率限制或属性待更新值聚合机制如：时间片批量更新、阈值变更等逻辑避免冗余属性变更信号发布。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>避免全局匹配规则导致无关信号接收（避免泛匹配）</h3>
+            </div>
+            <div class="principle-content">
+                <p>在信号匹配接收端，即创建Match对象进行信号接收处理时，要注意匹配规则的准确性。避免使用过于笼统的匹配规则，例如：</p>
+                <pre><code>type='signal'</code></pre>
+                <p>这种规则会匹配系统总线上发出的所有信号，使进程收到大量与业务无关的消息，产生以下问题：</p>
+                <ul>
+                    <li><strong>CPU与I0开销增加：</strong>每条信号都需要解析和回调处理，导致不必要的线程切换和消息队列堆积。</li>
+                    <li><strong>回调处理延迟：</strong>由于无关消息频繁触发回调，会阻塞处理真正关心的信号，增加处理延迟。</li>
+                    <li><strong>系统稳定性风险：</strong>在高信号频率场景下，泛匹配可能导致接收端回调堆积过多，甚至触发 TimeOut 或Bad message。</li>
+                </ul>
+                <p>正确示例：匹配规则中指定接口和信号名：</p>
+                <pre><code>type='signal',
+interface='com.example.Sensor',
+member='TemperaturChanged'</code></pre>
+                <p>这种规则只会接收与"温度变化"相关的信号，避免了对其他无关信号的处理负担，提高效率和稳定性。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>合理使用vtable标志位控制PropertyChange 信号发布</h3>
+            </div>
+            <div class="principle-content">
+                <p>在服务端使用register_property方法进行属性注册时，默认会将属性的vtable标志位设置为emit_change。这会导致所有通过register_property注册的属性在值变化时发送信号，从而可能产生冗余的变更信号。</p>
+                <p>因此，在注册属性时，应优先使用interface类提供的成员函数接口类型。该接口提供了多种重载形式，可以根据具体需求选择合适的接口，以避免不必要的信号发送。</p>
+            </div>
+        </div>
+
+        <div class="principle-section">
+            <div class="principle-title">
+                <h3>在D-Bus异步方法调用之前注册Match对象</h3>
+            </div>
+            <div class="principle-content">
+                <p>异步与同步调用的混用是一种不良设计。如果在发起异步方法调用的同时存在同步调用，异步调用返回的消息可能被同步调用意外读取，从而导致数据混乱或异步超时等问题。</p>
+                <p>在sdbusplus中，Match对象在构造时会发起一次方法调用，将匹配规则(Rule)注册到dbus-broker。从源码分析可知，这个方法调用是同步执行的。因此，如果在异步调用之后再注册Match对象，就属于典型的同步/异步混用场景，很容易引发前述问题。在OpenBMC开源软件包的设计中，Match对象通常会在对象构造函数中或main函数的起始位置创建。这样可以隐式地避免异步调用被同步Match注册干扰，从而保证系统的稳定性。</p>
+                <pre><code>int main()
+{
+  auto io = std::make_shared&lt;boost::asio::io_context&gt;();
+  auto conn = std::make_shared&lt;sdbusplus::asio::connection&gt;(*io);
+
+  //异步方法调用
+  conn-&gt;async_method_call(
+    [](boost::system::error_code ec, const std::string&amp; reply) {
+      if (!ec)
+      {
+        std::cout &lt;&lt; "Async reply: " &lt;&lt; reply &lt;&lt; "\n";
+      }
+    },
+    "xyz.openbmc_project.example",
+    "/xyz/openbmc_project.example",
+    "xyz.openbmc_project.example",
+    "AsyncMethod");
+
+    // 在异步调用之后注册Match（同步）
+    sdbusplus::bus::match_match_t match(
+      *conn,
+      "type='signal',interface='org.example.Interface',member='SomeSignal'",
+      [](sdbusplus::message::message &amp;msg) {
+        std::cout &lt;&lt; "Signal received\n";
+      });
+}</code></pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && src.includes('cdn.nlark.com')) {
+                    img.setAttribute('referrerpolicy', 'no-referrer');
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        this.insertAdjacentHTML('afterend', '<p class="img-error">⚠️ 图片加载失败，请手动下载并替换为本地路径</p>');
+                    };
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
