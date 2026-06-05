@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DBus 命令工具详解 - 不动声色的小站</title>
+    <!-- 看板娘部分 -->
+    <link rel="stylesheet" type="text/css" href="../../kanbanJS/new/live2d_demo/assets/waifu.css"/>
+    <!-- 看板娘部分 -->
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
@@ -149,7 +152,29 @@
     </style>
 <base target="_blank">
 </head>
+
+<!-- 看板娘部分 -->
+<script src="../../libJs/jquery.min.js"></script>
+<script src="../../kanbanJS/new/live2d_demo/assets/autoload.js"></script>
+<!-- 看板娘部分 -->
+
 <body>
+    <!-- 看板娘部分 -->
+    <div class="waifu">
+        <div class="waifu-tips"></div>
+        <canvas id="live2d" class="live2d"></canvas>
+        <div class="waifu-tool">
+            <span class="fui-home"></span>
+            <span class="fui-chat"></span>
+            <span class="fui-eye"></span>
+            <span class="fui-user"></span>
+            <span class="fui-photo"></span>
+            <span class="fui-info-circle"></span>
+            <span class="fui-cross"></span>
+        </div>
+    </div>
+    <!-- 看板娘部分 -->
+
     <header class="article-header">
         <div class="header-bg-img" style="background-image: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200');"></div>
         <div class="header-overlay"></div>
@@ -456,6 +481,17 @@
         </div>
 
     </div>
+
+    <!-- 看板娘部分 -->
+    <script src="../../kanbanJS/new/live2d_demo/assets/waifu-tips.js"></script>
+    <script src="../../kanbanJS/new/live2d_demo/assets/live2d.js"></script>
+
+    <script type="text/javascript">
+        live2d_settings['modelId'] = 1;
+        live2d_settings['modelTexturesId'] = 87;
+    	initModel("../../kanbanJS/new/live2d_demo/assets/waifu-tips.json")
+    </script>
+    <!-- 看板娘部分 -->
 
     <script src="../../Effects/backgroundEffect/sakura.js"></script>
     <script src="../../Effects/mouseSpecialEffects/mouseStar/cursor-meteor.js"></script>
