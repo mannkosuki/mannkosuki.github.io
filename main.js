@@ -20,6 +20,9 @@ const articles = [
 
     { title: "异步编程方式介绍", desc: "作为openBMC最常使用的异步编程，如何正确地使用？",
       path: "./article/article4/index.html", cover: "./images/article/homepageArticlePicture/article4/cover_async.png" },
+
+    { title: "网卡监控协议", desc: "mctp协议作为网卡最常用的通信协议，需要知道些什么？",
+    path: "./article/article5/index.html", cover: "./images/article/homepageArticlePicture/article5/cover_nic_protocol.png" },
   ];
   
   // ==============================

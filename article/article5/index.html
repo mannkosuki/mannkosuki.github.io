@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>网卡监控开发指南 - 不动声色的小站</title>
+    <!-- 看板娘部分 -->
+    <link rel="stylesheet" type="text/css" href="../../kanbanJS/new/live2d_demo/assets/waifu.css"/>
+    <!-- 看板娘部分 -->
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --text-color: #333;
+            --text-secondary: #555;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --code-bg: #f8f9fa;
+            --header-bg: #8e8e8e;
+            --danger-color: #DF2A3F;
+            --warning-bg: #fff3cd;
+            --warning-border: #ffc107;
+            --success-color: #27ae60;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8; color: var(--text-color); background: var(--bg-color); font-size: 15px;
+        }
+        .article-header {
+            position: relative; height: 320px; background: var(--header-bg);
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; color: white; overflow: hidden;
+        }
+        .header-bg-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; opacity: 0.2;
+        }
+        .header-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+        }
+        .header-content { position: relative; z-index: 2; max-width: 900px; padding: 0 30px; }
+        .article-title {
+            font-size: 2.2rem; font-weight: 700; margin-bottom: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4); line-height: 1.4; letter-spacing: 1px;
+        }
+        .article-meta {
+            font-size: 0.9rem; opacity: 0.85; display: flex;
+            justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .article-meta .separator { opacity: 0.5; font-weight: 300; }
+        .article-container {
+            max-width: 900px; margin: 0 auto; padding: 50px 40px;
+            background: var(--card-bg); min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 1.9rem; color: var(--primary-color); margin: 40px 0 25px 0;
+            padding-bottom: 12px; border-bottom: 3px solid var(--accent-color);
+            font-weight: 700;
+        }
+        h1:first-of-type { margin-top: 10px; }
+        h2 {
+            font-size: 1.5rem; color: var(--primary-color); margin: 35px 0 20px 0;
+            padding-bottom: 8px; border-bottom: 2px solid #ecf0f1; font-weight: 600;
+        }
+        h3 {
+            font-size: 1.2rem; color: #34495e; margin: 25px 0 15px 0; font-weight: 600;
+        }
+        h4 {
+            font-size: 1.05rem; color: #4a5568; margin: 20px 0 12px 0; font-weight: 600;
+        }
+        p { margin-bottom: 16px; text-align: justify; color: var(--text-secondary); line-height: 1.9; }
+        ul, ol { margin: 12px 0; padding-left: 24px; }
+        li { margin-bottom: 8px; color: var(--text-secondary); line-height: 1.8; }
+        li > ul, li > ol { margin-top: 6px; margin-bottom: 6px; }
+        img {
+            max-width: 100%; height: auto; display: block; margin: 20px auto;
+            border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        pre {
+            background: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 18px 20px; overflow-x: auto; margin: 20px 0;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            font-size: 0.85rem; line-height: 1.7; color: #333;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            background: #f0f0f0; padding: 2px 6px; border-radius: 4px;
+            font-size: 0.88em; color: #c7254e;
+        }
+        pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+        .command-block {
+            background: #1e1e1e; color: #d4d4d4; border-radius: 8px;
+            padding: 16px 20px; margin: 15px 0; overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            font-size: 0.9rem; line-height: 1.6;
+        }
+        .command-block .prompt { color: #6cc644; }
+        .command-block .cmd { color: #d4d4d4; }
+        .command-block .comment { color: #6a9955; }
+        .warning-box {
+            background: var(--warning-bg); border-left: 4px solid var(--warning-border);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+        }
+        .danger-box {
+            background: #fdf2f2; border-left: 4px solid var(--danger-color);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+            color: #92400e;
+        }
+        .success-box {
+            background: #f0fdf4; border-left: 4px solid var(--success-color);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+            color: #166534;
+        }
+        .highlight-red { color: var(--danger-color); font-weight: 600; }
+        .highlight-blue { color: var(--accent-color); font-weight: 600; }
+        table {
+            width: 100%; border-collapse: collapse; margin: 20px 0;
+            font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: 6px; overflow: hidden;
+        }
+        th, td {
+            border: 1px solid var(--border-color); padding: 12px 14px;
+            text-align: left; vertical-align: top;
+        }
+        th { background: #f8f9fa; font-weight: 600; color: var(--primary-color); }
+        tr:nth-child(even) { background: #fafbfc; }
+        .img-error {
+            text-align: center; color: #e74c3c; padding: 20px;
+            background: #fdf2f2; border-radius: 6px; margin: 10px 0; font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            .article-header { height: 260px; }
+            .article-title { font-size: 1.5rem; }
+            .article-container { padding: 25px 18px; }
+            h1 { font-size: 1.4rem; }
+            h2 { font-size: 1.2rem; }
+            pre { padding: 14px 16px; font-size: 0.8rem; }
+        }
+        html { scroll-behavior: smooth; }
+        ::selection { background: rgba(52, 152, 219, 0.2); color: var(--primary-color); }
+    </style>
+<base target="_blank">
+<base target="_blank">
+</head>
+<!-- 看板娘部分 -->
+<script src="../../libJs/jquery.min.js"></script>
+<script src="../../kanbanJS/new/live2d_demo/assets/autoload.js"></script>
+<!-- 看板娘部分 -->
+
+<body>
+    <!-- 看板娘部分 -->
+    <div class="waifu">
+        <div class="waifu-tips"></div>
+        <canvas id="live2d" class="live2d"></canvas>
+        <div class="waifu-tool">
+            <span class="fui-home"></span>
+            <span class="fui-chat"></span>
+            <span class="fui-eye"></span>
+            <span class="fui-user"></span>
+            <span class="fui-photo"></span>
+            <span class="fui-info-circle"></span>
+            <span class="fui-cross"></span>
+        </div>
+    </div>
+    <!-- 看板娘部分 -->
+
+    <header class="article-header">
+        <div class="header-bg-img" style="background-image: url('https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=1200');"></div>
+        <div class="header-overlay"></div>
+        <div class="header-content">
+            <h1 class="article-title">网卡监控开发指南</h1>
+            <div class="article-meta">
+                <span>发表于 2026-06-09</span>
+                <span class="separator">|</span>
+                <span>更新于 2026-06-09</span>
+                <span class="separator">|</span>
+                <span>字数总计: 5.8k</span>
+                <span class="separator">|</span>
+                <span>阅读时长: 18分钟</span>
+            </div>
+        </div>
+    </header>
+    <div class="article-container">
+
+        <h1>网卡基本信息</h1>
+
+        <h2>4个ID</h2>
+        <table>
+            <tr><th>ID名称</th><th>说明</th></tr>
+            <tr><td>VendorID</td><td>厂商ID（Intel、Mellanox、Broadcom、Linkdata等）</td></tr>
+            <tr><td>DeviceID</td><td>设备ID，区分每种厂商不同类别卡的ID</td></tr>
+            <tr><td>SubVendorID</td><td>子厂商ID，一般与VendorID相同，不一样可能是厂商使用的芯片是别家公司</td></tr>
+            <tr><td>SubDeviceID</td><td>子设备ID，区分类型卡下不同型号的ID</td></tr>
+        </table>
+        <p>不同卡的4个ID也不一样，因此可以通过4个ID确认同一种卡。</p>
+
+        <h2>类型区分</h2>
+        <p>网卡根据形态一般可以分为PCIe标卡、OCP卡、板载网卡等，目前监控的网卡主要以PCIe标卡、OCP卡为主。</p>
+
+        <h3>PCIe标卡</h3>
+        <p>PCIe标卡需要插到Riser的slot槽位上，拔插需要下电后开盖操作，标卡除智能网卡外，基本以S0监控为主。</p>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276361247-3276e14c-1641-4a79-8c7b-e779b38dd0ff.png" alt="NVIDIA网卡" referrerpolicy="no-referrer">
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276369512-40f87f88-b3d5-4fc9-aa67-225b620a544b.png" alt="PCIe Slot" referrerpolicy="no-referrer">
+
+        <h3>OCP卡</h3>
+        <p>OCP卡插拔更为便捷，接口一般位于机箱尾部，有些服务器厂家可以支持热插拔。大部分OCP卡支持S5工作，需要BMC一启动时就要监控。另外服务器OCP卡位置是固定的，1-2个为主，有些服务器厂商可以做到3个。</p>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276427742-e18c1c2f-c97b-40f7-845f-68511d1bf02f.png" alt="OCP卡1" referrerpolicy="no-referrer">
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276417440-ba4b3d5b-038e-4313-8189-7daf93c36d00.png" alt="OCP卡2" referrerpolicy="no-referrer">
+
+        <h2>网络接口区分</h2>
+        <p>网卡根据网络接口可以分为<strong>电口</strong>和<strong>光口</strong>：</p>
+        <ul>
+            <li><strong>电口</strong>：一般是RJ45口，笔记本、主机常见的网线接口</li>
+            <li><strong>光口</strong>：根据速率可分为SFP+、SFP28、QSFP+等，可插入光模块，再接入光纤线，需要与网卡规格配套。光模块可以热插拔，BMC需要监控光模块温度</li>
+        </ul>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276442224-d19d6ae9-e6a2-4279-89ce-afdab2bfdd08.png" alt="光模块" referrerpolicy="no-referrer">
+
+        <h2>厂商区分</h2>
+
+        <h3>Mellanox</h3>
+        <ul>
+            <li>支持NCSI标准命令</li>
+            <li>使用NCSI Over MCTP Over PCIe / NCSI Over MCTP Over SMBus通信获取动态信息</li>
+            <li>支持NCSI OEM命令</li>
+            <li>代码用NCSI标准命令做初始化，参考DSP0222_1.1.0_NC-SI Specification.pdf</li>
+            <li>用NCSI OEM命令获取动态信息，参考NVIDIA_Mellanox_OEM_commands_v0_86_multihost-sockdirect-smartnic-ib-eth.pdf</li>
+        </ul>
+
+        <h3>Broadcom</h3>
+        <ul>
+            <li>支持NCSI标准命令</li>
+            <li>使用NCSI Over MCTP Over PCIe / NCSI Over MCTP Over SMBus通信获取动态信息</li>
+            <li>支持NCSI OEM命令</li>
+            <li>代码用NCSI标准命令做初始化</li>
+            <li>用NCSI OEM命令获取动态信息，参考Broadcom NC-SI OEM Command Specification 0.81v 5-25-2018-1.pdf</li>
+        </ul>
+
+        <h3>Intel</h3>
+        <ul>
+            <li>支持NCSI标准命令</li>
+            <li>使用PLDM Over MCTP Over PCIe / PLDM Over MCTP Over SMBus通信获取动态信息</li>
+            <li>支持PLDM标准命令</li>
+            <li>代码用NCSI标准命令做初始化</li>
+            <li>用PLDM标准命令获取动态信息，可参考613875_E810_Datasheet_Rev2.7.pdf中12.8章节</li>
+        </ul>
+
+        <h3>LinkData(天箭)</h3>
+        <ul>
+            <li>仅支持PLDM Over MCTP Over SMBus通信</li>
+        </ul>
+
+        <h1>基础协议介绍</h1>
+
+        <h2>MCTP协议</h2>
+        <p>管理组件传输协议，是BMC与管理设备之间的通信协议。BMC可以用这个协议在多种不同的总线类型（如I2C、SMBus、I3C、PCIe、USB和以太网等）通过发送和接收MCTP格式的消息去访问管理设备。一个系统可以包括多个MCTP网络，MCTP Endpoint就是MCTP通信的一个终点。一个物理设备可以支持多个MCTP Endpoint，Endpoint的寻址是逻辑地址称为<strong>EID</strong>，EID类似于互联网上的IP地址。</p>
+        <p>MCTP报文分为两类：</p>
+        <ul>
+            <li><strong>MCTP控制报文</strong>：实现MCTP协议本身的配置，比如EID设置等</li>
+            <li><strong>MCTP数据报文</strong>：用来传输上层协议（比如PLDM、SPDM、NC-SI、VDM以及OEM定制协议）</li>
+        </ul>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276668170-3ac72719-1c63-4f66-999d-1d66818bdf5b.png" alt="MCTP报文结构" referrerpolicy="no-referrer">
+        <p>目前常用的总线类型有PCIe和SMBus，一般可称为<strong>MCTP Over PCIe</strong>、<strong>MCTP Over SMBus</strong>。</p>
+
+        <h2>NC-SI协议</h2>
+        <p>带外管理系统和网卡交互的一种协议。有些厂商网卡主要使用NCSI协议基于MCTP协议用于发送和接收网卡数据。</p>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276719615-86c532c1-08bb-4ac6-8ca9-42ef075082c2.png" alt="NC-SI报文格式" referrerpolicy="no-referrer">
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276725142-f4dcb483-79c2-4075-9141-355b40b714f3.png" alt="NCSI命令字段" referrerpolicy="no-referrer">
+
+        <h2>PLDM协议</h2>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276751567-6d251e6b-c749-4689-9401-3c6475847de0.png" alt="PLDM报文格式" referrerpolicy="no-referrer">
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1756276756313-6b063ab1-dec4-43aa-a915-5bd9554b8c90.png" alt="PLDM字段说明" referrerpolicy="no-referrer">
+
+        <h2>协议文档参考</h2>
+        <p>涉及到标准协议部分可以去 <a href="https://www.dmtf.org/standards/dsp">DMTF官网</a> 下载（需要科学上网）。</p>
+
+    </div>
+
+    <!-- 看板娘部分 -->
+    <script src="../../kanbanJS/new/live2d_demo/assets/waifu-tips.js"></script>
+    <script src="../../kanbanJS/new/live2d_demo/assets/live2d.js"></script>
+
+    <script type="text/javascript">
+        live2d_settings['modelId'] = 1;
+        live2d_settings['modelTexturesId'] = 87;
+        initModel("../../kanbanJS/new/live2d_demo/assets/waifu-tips.json")
+    </script>
+    <!-- 看板娘部分 -->
+
+    <script src="../../Effects/backgroundEffect/sakura.js"></script>
+    <script src="../../Effects/mouseSpecialEffects/mouseStar/cursor-meteor.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && src.includes('cdn.nlark.com')) {
+                    img.setAttribute('referrerpolicy', 'no-referrer');
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        this.insertAdjacentHTML('afterend', '<p class="img-error">⚠️ 图片加载失败，请手动下载并替换为本地路径</p>');
+                    };
+                }
+            });
+        });
+    </script>
+</body>
+</html>
