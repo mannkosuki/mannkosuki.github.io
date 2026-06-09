@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMCWeb 异步编程指南 - 不动声色的小站</title>
+    <!-- 看板娘部分 -->
+    <link rel="stylesheet" type="text/css" href="../../kanbanJS/new/live2d_demo/assets/waifu.css"/>
+    <!-- 看板娘部分 -->
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --text-color: #333;
+            --text-secondary: #555;
+            --bg-color: #f5f5f5;
+            --card-bg: #ffffff;
+            --border-color: #e0e0e0;
+            --code-bg: #f8f9fa;
+            --header-bg: #8e8e8e;
+            --danger-color: #DF2A3F;
+            --warning-bg: #fff3cd;
+            --warning-border: #ffc107;
+            --success-color: #27ae60;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+            line-height: 1.8; color: var(--text-color); background: var(--bg-color); font-size: 15px;
+        }
+        .article-header {
+            position: relative; height: 320px; background: var(--header-bg);
+            display: flex; align-items: center; justify-content: center;
+            text-align: center; color: white; overflow: hidden;
+        }
+        .header-bg-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-size: cover; background-position: center; opacity: 0.2;
+        }
+        .header-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
+        }
+        .header-content { position: relative; z-index: 2; max-width: 900px; padding: 0 30px; }
+        .article-title {
+            font-size: 2.2rem; font-weight: 700; margin-bottom: 20px;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.4); line-height: 1.4; letter-spacing: 1px;
+        }
+        .article-meta {
+            font-size: 0.9rem; opacity: 0.85; display: flex;
+            justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap;
+        }
+        .article-meta .separator { opacity: 0.5; font-weight: 300; }
+        .article-container {
+            max-width: 900px; margin: 0 auto; padding: 50px 40px;
+            background: var(--card-bg); min-height: 100vh;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+        }
+        h1 {
+            font-size: 1.9rem; color: var(--primary-color); margin: 40px 0 25px 0;
+            padding-bottom: 12px; border-bottom: 3px solid var(--accent-color);
+            font-weight: 700;
+        }
+        h1:first-of-type { margin-top: 10px; }
+        h2 {
+            font-size: 1.5rem; color: var(--primary-color); margin: 35px 0 20px 0;
+            padding-bottom: 8px; border-bottom: 2px solid #ecf0f1; font-weight: 600;
+        }
+        h3 {
+            font-size: 1.2rem; color: #34495e; margin: 25px 0 15px 0; font-weight: 600;
+        }
+        p { margin-bottom: 16px; text-align: justify; color: var(--text-secondary); line-height: 1.9; }
+        ul, ol { margin: 12px 0; padding-left: 24px; }
+        li { margin-bottom: 8px; color: var(--text-secondary); line-height: 1.8; }
+        li > ul, li > ol { margin-top: 6px; margin-bottom: 6px; }
+        img {
+            max-width: 100%; height: auto; display: block; margin: 20px auto;
+            border-radius: 6px; box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+        }
+        pre {
+            background: var(--code-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 18px 20px; overflow-x: auto; margin: 20px 0;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            font-size: 0.85rem; line-height: 1.7; color: #333;
+        }
+        code {
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            background: #f0f0f0; padding: 2px 6px; border-radius: 4px;
+            font-size: 0.88em; color: #c7254e;
+        }
+        pre code { background: none; padding: 0; color: inherit; font-size: inherit; }
+        .command-block {
+            background: #1e1e1e; color: #d4d4d4; border-radius: 8px;
+            padding: 16px 20px; margin: 15px 0; overflow-x: auto;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, "Courier New", monospace;
+            font-size: 0.9rem; line-height: 1.6;
+        }
+        .command-block .prompt { color: #6cc644; }
+        .command-block .cmd { color: #d4d4d4; }
+        .command-block .comment { color: #6a9955; }
+        .warning-box {
+            background: var(--warning-bg); border-left: 4px solid var(--warning-border);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+        }
+        .danger-box {
+            background: #fdf2f2; border-left: 4px solid var(--danger-color);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+            color: #92400e;
+        }
+        .success-box {
+            background: #f0fdf4; border-left: 4px solid var(--success-color);
+            padding: 15px 18px; margin: 20px 0; border-radius: 0 6px 6px 0;
+            color: #166534;
+        }
+        .highlight-red { color: var(--danger-color); font-weight: 600; }
+        .highlight-blue { color: var(--accent-color); font-weight: 600; }
+        table {
+            width: 100%; border-collapse: collapse; margin: 20px 0;
+            font-size: 0.9rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: 6px; overflow: hidden;
+        }
+        th, td {
+            border: 1px solid var(--border-color); padding: 12px 14px;
+            text-align: left; vertical-align: top;
+        }
+        th { background: #f8f9fa; font-weight: 600; color: var(--primary-color); }
+        tr:nth-child(even) { background: #fafbfc; }
+        .img-error {
+            text-align: center; color: #e74c3c; padding: 20px;
+            background: #fdf2f2; border-radius: 6px; margin: 10px 0; font-size: 0.9rem;
+        }
+        @media (max-width: 600px) {
+            .article-header { height: 260px; }
+            .article-title { font-size: 1.5rem; }
+            .article-container { padding: 25px 18px; }
+            h1 { font-size: 1.4rem; }
+            h2 { font-size: 1.2rem; }
+            pre { padding: 14px 16px; font-size: 0.8rem; }
+        }
+        html { scroll-behavior: smooth; }
+        ::selection { background: rgba(52, 152, 219, 0.2); color: var(--primary-color); }
+    </style>
+<base target="_blank">
+<base target="_blank">
+</head>
+<!-- 看板娘部分 -->
+<script src="../../libJs/jquery.min.js"></script>
+<script src="../../kanbanJS/new/live2d_demo/assets/autoload.js"></script>
+<!-- 看板娘部分 -->
+
+<body>
+    <!-- 看板娘部分 -->
+    <div class="waifu">
+        <div class="waifu-tips"></div>
+        <canvas id="live2d" class="live2d"></canvas>
+        <div class="waifu-tool">
+            <span class="fui-home"></span>
+            <span class="fui-chat"></span>
+            <span class="fui-eye"></span>
+            <span class="fui-user"></span>
+            <span class="fui-photo"></span>
+            <span class="fui-info-circle"></span>
+            <span class="fui-cross"></span>
+        </div>
+    </div>
+    <!-- 看板娘部分 -->
+
+    <header class="article-header">
+        <div class="header-bg-img" style="background-image: url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200');"></div>
+        <div class="header-overlay"></div>
+        <div class="header-content">
+            <h1 class="article-title">BMCWeb 异步编程指南</h1>
+            <div class="article-meta">
+                <span>发表于 2026-06-09</span>
+                <span class="separator">|</span>
+                <span>更新于 2026-06-09</span>
+                <span class="separator">|</span>
+                <span>字数总计: 5.8k</span>
+                <span class="separator">|</span>
+                <span>阅读时长: 18分钟</span>
+            </div>
+        </div>
+    </header>
+    <div class="article-container">
+
+        <h1>背景介绍</h1>
+        <p>在 bmcweb 的异步编程中，经常会遇到以下两种情况，</p>
+
+        <h2>1、链式调用</h2>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1752631270709-edcc9b0c-37ee-4ae0-8b98-10f4a3cd8649.png" alt="链式调用示意图" referrerpolicy="no-referrer">
+        <p>每一个异步任务都依赖于上一个异步任务的执行结果，这样当嵌套层数过多时，代码格式上较复杂，阅读困难。</p>
+<pre><code>dbus::utility::getProperty&lt;T&gt;(
+    service, path, interface, property, 
+    [variables](const boost::system::error_code& ec, const T& prop) {
+        ...
+        dbus::utility::getProperty&lt;T&gt;(
+            service, path, interface, property, 
+            [variables](const boost::system::error_code& ec, const T& prop) {
+                ...
+                dbus::utility::getProperty&lt;T&gt;(
+                    service, path, interface, property, 
+                    [variables](const boost::system::error_code& ec, const T& prop) {
+                        ...
+                        dbus::utility::getProperty&lt;T&gt;(
+                            service, path, interface, property, 
+                            [variables](const boost::system::error_code& ec, const T& prop) {
+                            ...              
+                        });
+                        ...           
+                });
+                ...  
+        });
+        ...
+});</code></pre>
+
+        <h2>2、异步任务收敛</h2>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1752631306533-7eb210f3-45fa-4f87-8e06-a03a2475e302.png" alt="异步任务收敛示意图" referrerpolicy="no-referrer">
+        <p>某一个异步任务需要等待多个异步任务的执行结果，在获取所有执行结果后方能继续后续任务。</p>
+<pre><code>task1()
+{
+    dbus::utility::getProperty&lt;T&gt;(
+        service1, path1, interface1, property1, 
+        [variables](const boost::system::error_code& ec, const T& prop) {
+            ...
+    });
+}
+
+task2()
+{
+    dbus::utility::getProperty&lt;T&gt;(
+        service1, path1, interface1, property1, 
+        [variables](const boost::system::error_code& ec, const T& prop) {
+            ...
+    });
+}
+
+// 执行前置条件：task1和task2全部执行完成
+taskConvergence()
+{
+    ...
+}
+
+taskEntry()
+{
+    task1();
+    task2();
+    taskConvergence();
+}</code></pre>
+
+        <h1>解决方法</h1>
+
+        <h2>1、将异步任务封装成函数</h2>
+        <p>对于链式调用的多层嵌套，可以通过将不同的异步任务封装成函数的形式，解决代码格式上的问题，更加方便阅读，缺点是需要额外封装函数，没有 lambda 表达式书写更方便。</p>
+<pre><code>taskStep4(const boost::system::error_code& ec, const T& prop)
+{
+    ...
+    handle(ec, prop);
+    ...
+}
+
+taskStep3(const boost::system::error_code& ec, const T& prop)
+{
+    ...
+    handle(ec, prop);
+    dbus::utility::getProperty&lt;T&gt;(
+        service, path, interface, property, 
+        [variables](const boost::system::error_code& ec, const T& prop) {
+            taskStep4(ec, prop);
+        });
+    ...
+}
+
+taskStep2(const boost::system::error_code& ec, const T& prop)
+{
+    ...
+    handle(ec, prop);
+    dbus::utility::getProperty&lt;T&gt;(
+        service, path, interface, property, 
+        [variables](const boost::system::error_code& ec, const T& prop) {
+            taskStep3(ec, prop);
+        });
+    ...
+}
+
+taskStep1(const boost::system::error_code& ec, const T& prop)
+{
+    ...
+    handle(ec, prop);
+    dbus::utility::getProperty&lt;T&gt;(
+        service, path, interface, property, 
+        [variables](const boost::system::error_code& ec, const T& prop) {
+            taskStep2(ec, prop);
+        });
+    ...
+}
+
+dbus::utility::getProperty&lt;T&gt;(
+    service, path, interface, property, 
+    [variables](const boost::system::error_code& ec, const T& prop) {
+        taskStep1(ec, prop);
+});</code></pre>
+
+        <h2>2、共享指针处理回调收敛</h2>
+        <p>对于需要异步收敛的场景，经常采用多个异步任务共同捕获同一个自定义容器对象的共享指针，并将收敛之后需要执行的任务注册到容器对象，在容器对象析构时执行回调函数的方式，这也是 asyncResp 的实现原理。</p>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1752631400483-a9bd0102-6779-4fec-a3e8-af26eea1b59e.png" alt="共享指针回调收敛示意图" referrerpolicy="no-referrer">
+        <p>以下是一个自定义容器的实现</p>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1752631441524-1e4d0fbc-2750-43c0-922a-6c296be3b899.png" alt="AsyncBatchProcesser 类图" referrerpolicy="no-referrer">
+<pre><code>std::shared_ptr&lt;AsyncBatchProcesser&lt;int&gt;&gt; asyncBatchProcesser =
+    std::make_shared&lt;AsyncBatchProcesser&lt;int&gt;&gt;([](std::vector&lt;int&gt;& data) {
+        ....
+        for (const auto& it : data)
+        {
+            handle(it);
+        }
+    });
+
+dbus::utility::getProperty&lt;T&gt;(
+    service, path, interface, property, 
+    [asyncBatchProcesser](const boost::system::error_code& ec, const T& prop) {
+        ...
+        asyncBatchProcesser->data.emplace_back(data1);
+    });
+
+dbus::utility::getProperty&lt;T&gt;(
+    service, path, interface, property, 
+    [asyncBatchProcesser](const boost::system::error_code& ec, const T& prop) {
+        asyncBatchProcesser->data.emplace_back(data2);
+    });</code></pre>
+
+        <h2>3、协程——同步方式编写异步过程</h2>
+        <p>协程的用法和线程类似，但是最本质的区别是，协程的调度是在应用层进行，线程的调度是由操作系统完成，协程更加的轻量，切换上下文开销更小。</p>
+
+        <div class="danger-box">
+            <strong>注意！</strong>当前 bmcweb 编程中，<span class="highlight-red">GET 接口不允许使用协程方式实现异步</span>。由于 GET 方法的 expand 操作会存在并发处理接口 hander 的场景，如果应用协程处理，存在大量协程挂起的情况对进程的影响未知。因此当前协程方式编码允许在 POST 与 PATCH 方法下并且数据请求存在链式依赖的情况下使用。
+        </div>
+
+        <h3>spawn 的方式创建协程</h3>
+<pre><code>void spawn(
+    boost::asio::io_context& ioc,
+    Function&& function,
+    boost::asio::yield_context yield = boost::asio::yield_context());</code></pre>
+<pre><code>#include &lt;iostream&gt;
+#include &lt;boost/asio.hpp&gt;
+#include &lt;boost/asio/spawn.hpp&gt;
+#include &lt;chrono&gt;
+
+using namespace boost::asio;
+
+io_context io;
+
+void task1(yield_context yield) {
+    steady_timer timer(io);
+    try {
+        timer.expires_from_now(std::chrono::seconds(1));
+        std::cout << "Task1 started, waiting for 1 second..." << std::endl;
+        timer.async_wait(yield);
+        std::cout << "Task1 completed!" << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "Task1 Exception: " << e.what() << std::endl;
+    }
+}
+
+void task2(yield_context yield) {
+    steady_timer timer(io);
+    try {
+        timer.expires_from_now(std::chrono::seconds(2));
+        std::cout << "Task2 started, waiting for 2 seconds..." << std::endl;
+        timer.async_wait(yield);
+        std::cout << "Task2 completed!" << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "Task2 Exception: " << e.what() << std::endl;
+    }
+}
+
+int main() {
+    try {        
+        auto start_time = std::chrono::steady_clock::now();  // 记录开始时间
+
+        // 创建并启动两个协程
+        spawn(io, task1, {});
+        spawn(io, task2, {});
+
+        std::cout << "Main: Coroutines started, running event loop..." << std::endl;
+        io.run(); // 启动事件循环，处理异步操作
+
+        auto end_time = std::chrono::steady_clock::now();  // 记录结束时间
+        auto duration = std::chrono::duration_cast&lt;std::chrono::milliseconds&gt;(end_time - start_time);
+        std::cout << "Main: Event loop finished. Total time: " << duration.count() << "ms" << std::endl;
+    } catch (std::exception& e) {
+        std::cerr << "Exception: " << e.what() << std::endl;
+        return 1;
+    }
+    return 0;
+}</code></pre>
+
+        <p>对于链式调用可利用协程修改成以下更直观简洁的方式</p>
+<pre><code>boost::system::error_code ec;
+boost::asio::spawn(io_context, [conn](boost::asio::yield_context yield)
+{
+    T prop1;
+    prop1 = conn->yield_method_call&lt;T&gt;(yield, ec, service1, path1, "org.freedesktop.DBus.Properties",
+                                       "Get", interface1, property1);
+    handle(ec);
+    ...
+
+    T prop2;
+    prop2 = conn->yield_method_call&lt;T&gt;(yield, ec, service2, path2, "org.freedesktop.DBus.Properties",
+                                       "Get", interface2, property2);
+    handle(ec);
+    ...
+
+    T prop3;
+    prop3 = conn->yield_method_call&lt;T&gt;(yield, ec, service3, path3, "org.freedesktop.DBus.Properties",
+                                       "Get", interface3, property3);
+    handle(ec);
+    ...
+
+    T prop4;
+    prop4 = conn->yield_method_call&lt;T&gt;(yield, ec, service4, path4, "org.freedesktop.DBus.Properties",
+                                       "Get", interface4, property4);
+    handle(ec);
+    ...
+}</code></pre>
+
+        <h1>基于事件驱动模型</h1>
+        <p>为了减少回调函数的嵌套，以及更直观的理解多个回调任务收敛的过程，本文将介绍一种基于事件驱动模型的松耦合编程方法。</p>
+        <p>模型基于<strong>订阅-发布</strong>的形式，将不同回调任务之间去耦合，每个异步任务将自己的执行时机交给事件总线托管。每个异步任务需要处理事件总线传输过来的数据，并将自己执行之后的数据送到事件总线。</p>
+        <p>该模型的具体实现位于，<code>G70/bmcweb/event_bus.hpp</code></p>
+        <img src="https://cdn.nlark.com/yuque/0/2025/png/29657337/1752631833975-81212b59-9b4c-4c4f-9e41-b0e539f72293.png" alt="事件总线示意图" referrerpolicy="no-referrer">
+
+        <h2>发布事件</h2>
+<pre><code>void async::EventData::publish(const std::string &eventName)
+void async::EventData::publish(const std::string &eventName, const std::any &data)
+
+
+asyncEventBus->publish(eventId);
+asyncEventBus->publish(eventId, data); // <=> asyncEventBus->addEventData(eventId, eventId, data);
+                                       //     asyncEventBus->publish(eventId);</code></pre>
+
+        <h2>订阅事件</h2>
+<pre><code>void async::EventData::subscribe(const std::string &eventName, Callback callback, bool persistent = false,
+                                 const std::optional&lt;std::string&gt; &name = std::nullopt)</code></pre>
+        <p>目前只支持以下三种方式订阅事件</p>
+
+        <h3>1、订阅单个事件，一次性触发</h3>
+<pre><code>std::string eventId1 = genEventId("Test1");
+
+taskEntry()
+{
+    ...
+    asyncEventBus->publish(eventId1);
+    ...
+}
+
+asyncEventBus->subscribe(eventId1, [eventId1](const async::EventDataMap dataMap){
+    if (auto data = async::getEventData&lt;T&gt;(dataMap, eventId1, "dataName"))
+    {
+        // do something
+    }
+});</code></pre>
+
+        <h3>2、订阅单个事件，永久性触发</h3>
+<pre><code>std::string eventId1 = genEventId("Test1");
+
+taskEntry()
+{
+    ...
+    asyncEventBus->publish(eventId1);
+    ...
+}
+
+asyncEventBus->subscribe(eventId1, [eventId1](const async::EventDataMap dataMap){
+    if (auto data = async::getEventData&lt;T&gt;(dataMap, eventId1, "dataName"))
+    {
+        // do something
+    }
+}, true);</code></pre>
+
+        <h3>3、订阅多个事件，一次性触发</h3>
+<pre><code>std::string eventId1 = genEventId("Test1");
+std::string eventId2 = genEventId("Test2");
+
+taskEntry1()
+{
+    ...
+    asyncEventBus->publish(eventId1);
+    ...
+}
+
+taskEntry2()
+{
+    ...
+    asyncEventBus->publish(eventId2);
+    ...
+}
+
+asyncEventBus->subscribe(std::vector&lt;std::string&gt;{eventId1,eventId2}, [eventId1, eventId2](const async::EventDataMap dataMap){
+    if (auto data = async::getEventData&lt;T&gt;(dataMap, eventId1, "dataName"))
+    {
+        // do something
+    }
+});</code></pre>
+
+        <h2>添加数据和获取数据</h2>
+<pre><code>void addEventData(const std::string &eventName, const std::string &dataName, const std::any &data)
+
+inline std::optional&lt;T&gt; getEventData(const EventDataMap &dataMap,
+                                     const std::string &eventName, const std::string &dataName)</code></pre>
+<pre><code>std::string eventId1 = genEventId("Test1");
+std::string eventId2 = genEventId("Test2");
+
+taskEntry1()
+{
+    ...
+    int test = 1;
+    asyncEventBus->addEventData(eventId1, "test", test);
+    asyncEventBus->publish(eventId1);
+    ...
+}
+
+taskEntry2()
+{
+    ...
+    int test = 2;
+    asyncEventBus->addEventData(eventId2, "test", test);
+    asyncEventBus->publish(eventId2);
+    ...
+}
+
+asyncEventBus->subscribe({eventId1,eventId2}, [eventId1, eventId2](const async::EventDataMap dataMap){
+    auto data1 = async::getEventData&lt;int&gt;(dataMap, eventId1, "test");
+    auto data2 = async::getEventData&lt;int&gt;(dataMap, eventId2, "test");
+
+    if (data1 && data2)
+    {
+        // do something
+    }
+});</code></pre>
+
+        <h2>链式调用</h2>
+<pre><code>std::string eventId1 = genEventId("Test1");
+std::string eventId2 = genEventId("Test2");
+std::string eventId3 = genEventId("Test3");
+std::string eventId4 = genEventId("Test4");
+
+taskEntry()
+{
+    ...
+    asyncEventBus->publish(eventId1);
+    ...
+}
+
+asyncEventBus->subscribe(eventId1, [eventId1, eventId2](const async::EventDataMap dataMap){
+    if (auto data = async::getEventData&lt;T&gt;(dataMap, eventId1, "dataName"))
+    {
+        // do something
+        asyncEventBus->publish(eventId2);
+    }
+});
+
+asyncEventBus->subscribe(eventId2, [eventId2, eventId3](const async::EventDataMap dataMap){
+    if (auto data = async::getEventData&lt;T&gt;(dataMap, eventId2, "dataName"))
+    {
+        // do something
+        asyncEventBus->publish(eventId3);
+    }
+});
+
+asyncEventBus->subscribe(eventId3, [eventId3, eventId4](const async::EventDataMap dataMap){
+    if (auto data = async::getEventData&lt;T&gt;(dataMap, eventId3, "dataName"))
+    {
+        // do something
+        asyncEventBus->publish(eventId4);
+    }
+});
+
+asyncEventBus->subscribe(eventId4, [eventId4](const async::EventDataMap dataMap){
+    if (auto data = async::getEventData&lt;T&gt;(dataMap, eventId4, "dataName"))
+    {
+        // do something
+    }
+});</code></pre>
+
+        <h2>回调收敛</h2>
+<pre><code>std::string eventId1 = genEventId("Test1");
+std::string eventId2 = genEventId("Test2");
+
+taskEntry1()
+{
+    ...
+    int test = 1;
+    asyncEventBus->addEventData(eventId1, "test", test);
+    asyncEventBus->publish(eventId1);
+    ...
+}
+
+taskEntry2()
+{
+    ...
+    int test = 2;
+    asyncEventBus->addEventData(eventId2, "test", test);
+    asyncEventBus->publish(eventId2);
+    ...
+}
+
+asyncEventBus->subscribe(std::vector&lt;std::string&gt;{eventId1,eventId2},
+                         [eventId1, eventId2](const async::EventDataMap dataMap)
+{
+    auto data1 = async::getEventData&lt;T&gt;(dataMap, eventId1, "test");
+    auto data2 = async::getEventData&lt;T&gt;(dataMap, eventId2, "test");
+
+    if (data1 && data2)
+    {
+        // do something
+    }
+});</code></pre>
+
+        <h1>bmcweb 编程注意点</h1>
+
+        <div class="warning-box">
+            <strong>1、</strong>在每个异步回调中都要捕获以值的形式捕获 asyncResp，为了保证回调执行完再返回 asyncResp，如果不使用 asyncResp 可以调用如下语句消除 unused 警告：<br>
+            <code>std::ignore = asyncResp;</code>
+        </div>
+
+        <div class="warning-box">
+            <strong>2、</strong>跨域传递参数或者管理变量生命周期时，首推智能指针。例如多个 lambda 表达式中需要使用同一个变量，推荐封装成 shared_ptr 的形式使用。如果采用引用方式管理变量，很容易出现 coredump 问题。
+        </div>
+<pre><code>std::string eventId1 = genEventId("Test1");
+std::string eventId2 = genEventId("Test2");
+
+taskEntry()
+{
+    ...
+    std::shared_ptr&lt;nlohmann::json::object_t&gt; jsonPtr =
+        std::make_shared&lt;nlohmann::json::object_t&gt;();
+    process(jsonPtr);
+    asyncEventBus->addEventData(eventId1, "jsonPtr", jsonPtr);
+    asyncEventBus->publish(eventId1);
+    ...
+}
+
+asyncEventBus->subscribe(eventId1, [eventId1, eventId2](const async::EventDataMap dataMap){
+    if (auto jsonPtrOpt = async::getEventData&lt;std::shared_ptr&lt;nlohmann::json::object_t&gt;&gt;(dataMap, eventId1, "jsonPtr"))
+    {
+        ...
+        auto& jsonPtr = *jsonPtrOpt;
+        process(jsonPtr);
+        asyncEventBus->addEventData(eventId2, "jsonPtr", jsonPtr);
+        asyncEventBus->publish(eventId2);
+        ...
+    }
+});
+
+asyncEventBus->subscribe(eventId2, [eventId2](const async::EventDataMap dataMap){
+    if (auto jsonPtrOpt = async::getEventData&lt;std::shared_ptr&lt;nlohmann::json::object_t&gt;&gt;(dataMap, eventId2, "jsonPtr"))
+    {
+        ...
+        auto& jsonPtr = *jsonPtrOpt;
+        process(jsonPtr)
+        ...
+    }
+});</code></pre>
+
+        <div class="danger-box">
+            <strong>3、</strong>每个捕获 asyncResp 的 lambda 表达式，需要保证该 lambda 表达式在将来一定会被回收，如果不回收则 asyncResp 无法被销毁，接口不会返回。
+        </div>
+
+    </div>
+
+    <!-- 看板娘部分 -->
+    <script src="../../kanbanJS/new/live2d_demo/assets/waifu-tips.js"></script>
+    <script src="../../kanbanJS/new/live2d_demo/assets/live2d.js"></script>
+
+    <script type="text/javascript">
+        live2d_settings['modelId'] = 1;
+        live2d_settings['modelTexturesId'] = 87;
+        initModel("../../kanbanJS/new/live2d_demo/assets/waifu-tips.json")
+    </script>
+    <!-- 看板娘部分 -->
+
+    <script src="../../Effects/backgroundEffect/sakura.js"></script>
+    <script src="../../Effects/mouseSpecialEffects/mouseStar/cursor-meteor.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && src.includes('cdn.nlark.com')) {
+                    img.setAttribute('referrerpolicy', 'no-referrer');
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        this.insertAdjacentHTML('afterend', '<p class="img-error">⚠️ 图片加载失败，请手动下载并替换为本地路径</p>');
+                    };
+                }
+            });
+        });
+    </script>
+</body>
+</html>
