@@ -6,3 +6,5 @@
 6. article目录下的index.html为通用模板，新增文章需要修改部分如下：
     1. article-header 部分的 PUBLISH_DATE UPDATE_DATE WORD_COUNT READ_TIME 根据实际情况修正即可
     2. {{ARTICLE_CONTENT}}部分替换为文章主体部分
+    3. {{HEADER_BG_IMAGE}}替换为背景图片
+    4. {{ARTICLE_TITLE}}替换为自定义标题
