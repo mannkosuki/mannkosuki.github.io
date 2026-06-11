@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bitbake 入门指南 - 不动声色的小站</title>
+    <!-- 看板娘样式 -->
+    <link rel="stylesheet" type="text/css" href="../../kanbanJS/new/live2d_demo/assets/waifu.css"/>
+    <!-- 通用文章样式 -->
+    <link rel="stylesheet" href="../../styles/article/article.css">
+<base target="_blank">
+<base target="_blank">
+</head>
+
+<!-- 看板娘脚本 -->
+<script src="../../libJs/jquery.min.js"></script>
+<script src="../../kanbanJS/new/live2d_demo/assets/autoload.js"></script>
+
+<body>
+    <!-- 看板娘 -->
+    <div class="waifu">
+        <div class="waifu-tips"></div>
+        <canvas id="live2d" class="live2d"></canvas>
+        <div class="waifu-tool">
+            <span class="fui-home"></span>
+            <span class="fui-chat"></span>
+            <span class="fui-eye"></span>
+            <span class="fui-user"></span>
+            <span class="fui-photo"></span>
+            <span class="fui-info-circle"></span>
+            <span class="fui-cross"></span>
+        </div>
+    </div>
+
+    <!-- 文章头部 -->
+    <header class="article-header">
+      <div class="header-bg-img" style="background-image: url('https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1200');"></div>
+      <div class="header-overlay"></div>
+      <div class="header-content">
+          <h1 class="article-title">Bitbake 入门指南</h1>
+          <div class="article-meta">
+              <span>发表于 2026-06-11</span>
+              <span class="separator">|</span>
+              <span>更新于 2026-06-11</span>
+              <span class="separator">|</span>
+              <span>字数总计: 8.5k</span>
+              <span class="separator">|</span>
+              <span>阅读时长: 25分钟</span>
+          </div>
+      </div>
+    </header>
+
+    <!-- 文章正文 -->
+    <div class="article-container">
+        <h1>一，什么是 Bitbake</h1>
+
+        <p>Bitbake 是一个开源的构建工具，通过提供必要的<strong>元数据</strong>，Bitbake 能够构建出 bootloader 到应用层各种各样的软件包。</p>
+
+        <p>Bitbake 有几个比较突出的特点：</p>
+        <ul>
+            <li>Bitbake 是以<strong>任务</strong>为单位进行构建，而这些任务通常是由<strong>菜谱文件</strong>（<code>.bb</code>，也称配方文件/Recipes）、<strong>配置文件</strong>（<code>.conf</code>）和<strong>类文件</strong>（<code>.bbclass</code>）所定义。</li>
+            <li>通过添加一些变量，Bitbake 可以从本地，甚至从远程服务器获取要用的源码或补丁等文件。</li>
+        </ul>
+
+        <p>Bitbake 可以从这里下载：<a href="https://github.com/openembedded/bitbake">https://github.com/openembedded/bitbake</a></p>
+
+        <p>下载的代码里有一个 <code>bin</code> 目录，把这个目录写进 <code>PATH</code> 变量：</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1675930796717-898adaa9-4715-4fbf-a546-d9c9f0c4fdee.png" alt="设置PATH环境变量" referrerpolicy="no-referrer">
+
+        <p>执行 <code>bitbake --version</code>，效果如下：</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1675930827422-5a57a72a-3170-461b-9ced-8994b265893e.png" alt="bitbake版本查询" referrerpolicy="no-referrer">
+
+        <p>以上的环境是 <strong>Ubuntu18.04 + Python3.6</strong></p>
+
+        <h1>二，Bitbake 工程布局</h1>
+
+        <p>Bitbake 工程通过 <strong>layer 目录</strong>和 <strong>build 目录</strong>组织。layers 目录包含配置文件、class 文件和 recipes。</p>
+
+        <h2>1，Layer 目录</h2>
+        <p>Layer 目录包含配置、任务和目标描述。常用 <strong>meta-'something'</strong> 命名 Layer 目录。</p>
+
+        <h2>2，Build 目录</h2>
+        <p>Build 目录是 bitbake 命令被执行的地方。在这里，bitbake 期望能找到其初始配置文件，并将生成的所有文件放在这个目录下。</p>
+
+        <h1>三，最小工程</h1>
+
+        <p>创建4个文件：<code>bblayers.conf</code> + <code>base.bbclass</code> + <code>bitbake.conf</code> + <code>layer.conf</code>，形成一个最小工程。</p>
+
+        <pre><code>bbTutorial/
+├── build
+│   ├── bitbake.lock
+│   └── conf
+│       └── bblayers.conf
+└── meta-tutorial
+    ├── classes
+    │   └── base.bbclass
+    └── conf
+        ├── bitbake.conf
+        └── layer.conf</code></pre>
+
+        <h2>1，需要的配置文件</h2>
+
+        <p><strong>build/conf/bblayers.conf</strong>，这个文件是 Bitbake 在其工作目录中（即 build 目录）期望找到的第一个文件。现在我们用以下内容创建一个 bblayers.conf 文件：</p>
+
+        <pre><code>BBPATH := "${TOPDIR}"   #BBPATH用于定位.bbclass文件和.conf文件。添加当前目录到BBPATH，TOPDIR(即build目录)被BitBake设置为当前工作目录
+BBFILES ?= ""           #初始设置BBFILES变量为空，Recipes在后面会添加
+BBLAYERS = "${TOPDIR}/../meta-tutorial" #添加我们 meta-tutorial 目录到 BBLAYERS 变量。
+                                        #当 BitBake 开始执行时，它会搜索所有给定的 layer 目录，以便获得其他配置。</code></pre>
+
+        <p><strong>meta-tutorial/conf/layer.conf</strong>，每个 layer 都需要一个 <code>conf/layer.conf</code> 文件，用来指定该 layer 目录中有哪些 recipes 及其路径。现在我们用以下内容创建它：</p>
+
+        <pre><code>BBPATH .= ":${LAYERDIR}"   #LAYERDIR是BitBake传给layer.conf，表示当前layer的目录。
+                           #我们添加该路径到BBPATH变量. BBPATH is used to search for configuration and class files under the 'conf' and 'classes' directories, respectively
+BBFILES += ""              #BBFILES告诉BitBake recipes(.bb文件)在哪，现在我们没有添加任何东西，但是一会儿我们会改变它。</code></pre>
+
+        <p><strong>meta-tutorial/classes/base.bbclass</strong>，该 class 是 yocto 最基本的类，所有的 recipes（.bb文件，菜谱文件）都直接或间接的继承该类。It is always included automatically for all recipes and classes.</p>
+
+        <p><strong>meta-tutorial/conf/bitbake.conf</strong>，bitbake在启动时会解析 <code>bitbake.conf</code>，它包含一系列变量。<code>bitbake.conf</code> 会装载用户提供的 <code>local.conf</code> 文件。</p>
+
+        <p>上面两个文件可以从 Bitbake 安装目录中获取。这些文件位于文件夹 <code>bitbake-$version/conf</code> 和 <code>bitbake-$version/classes</code> 中。只需要将他们复制到 tutorial 项目中。</p>
+
+        <div class="danger-box">
+            <strong>注意事项：</strong>".=" 和 "+=" 以不添加空格和添加空格的方式，将追加值赋给一个变量
+        </div>
+
+        <h2>2，Bitbake 搜索路径</h2>
+        <p>Bitbake 会搜索 <code>BBPATH</code> 指定的路径。目前我们给 <code>BBPATH</code> 赋值了 <code>${TOPDIR}</code> 和 <code>${LAYERDIR}</code>。</p>
+
+        <h1>四，第一次运行</h1>
+
+        <p>创建上述四个配置文件后，在终端 cd 到 build 目录，这是我们的工作目录。后面我们会一直在 build 目录运行 bitbake 命令，以便 bitbake 可以找到相应的 <code>conf/bblayers.conf</code> 文件。</p>
+
+        <p>现在，在 build 目录下不带任何参数运行 <code>bitbake</code> 命令：</p>
+
+        <div class="command-block">
+            <span class="prompt">$</span> <span class="cmd">bitbake</span>
+        </div>
+
+        <p>如果先前的步骤正确，则控制台会输出：</p>
+        <pre><code>Nothing to do.  Use 'bitbake world' to build everything, or run 'bitbake --help' for usage information.</code></pre>
+
+        <p>这里介绍一个很有用的命令参数，让其输出一些 debug 信息。执行 <code>bitbake -vDD</code>，然后查看其输出，它会告诉我们大量关于 Bitbake 如何动作的信息。</p>
+
+        <pre><code>DEBUG: Found bblayers.conf (~/bbTutorial/build/conf/bblayers.conf)
+DEBUG: LOAD ~/bbTutorial/build/conf/bblayers.conf
+DEBUG: Adding layer ~/bbTutorial/meta-tutorial
+DEBUG: LOAD ~/bbTutorial/meta-tutorial/conf/layer.conf
+DEBUG: LOAD ~/bbTutorial/meta-tutorial/conf/bitbake.conf
+DEBUG: BB configuration INHERITs:0: inheriting ~/bbTutorial/meta-tutorial/classes/base.bbclass
+DEBUG: BB ~/bbTutorial/meta-tutorial/classes/base.bbclass: handle(data, include)
+DEBUG: LOAD ~/bbTutorial/meta-tutorial/classes/base.bbclass
+DEBUG: Clearing SRCREV cache due to cache policy of: clear
+DEBUG: Using cache in '~/bbTutorial/build/tmp/cache/local_file_checksum_cache.dat'</code></pre>
+
+        <p>可以看出，当 bitbake 运行时，会首先加载当前目录下 <code>config/bblayers.conf</code> 文件。通过这个文件找到 layer 目录，再去 layer 目录下 config 目录中加载 <code>layer.conf</code> 和 <code>bitbake.conf</code> 文件。</p>
+
+        <p class="highlight-red">提示，所有实例代码都可以从 <a href="https://bitbucket.org/a4z/bitbakeguide">https://bitbucket.org/a4z/bitbakeguide</a> 获取</p>
+
+        <h1>五，第一个 Recipe</h1>
+
+        <p>Bitbake 需要使用 recipe 定义要做些什么，现在什么都没有。我们可以通过 <code>bitbake -s</code> 确认运行时什么也没有：</p>
+
+        <pre><code>leon@leon-PC:~/Code/bitbake/bbTutorial/build$ bitbake -s
+Loading cache: 100% |                                                                         | ETA:  --:--:--
+Loaded 0 entries from dependency cache.
+Recipe Name                                    Latest Version         Preferred Version
+===========                                    ==============         =================</code></pre>
+
+        <p>上面告诉了我们两个信息：</p>
+        <ul>
+            <li>没有定义任何 cache</li>
+            <li>Bitbake 真的没事可做，只显示了一个空的 recipe 列表</li>
+        </ul>
+
+        <h2>1，Cache 位置</h2>
+        <p>Bitbake 会在 cache 目录中缓存 meta 数据。这会帮忙加速后面执行的命令。</p>
+
+        <p>我们可通过在 <code>bitbake.conf</code> 文件中添加一个变量，解决 cache 找不到的问题：</p>
+        <pre><code>CACHE = "${TMPDIR}/cache/default"</code></pre>
+
+        <p>下一步是添加一个 recipe，需要两个步骤：</p>
+        <ul>
+            <li>使 bitbake 可以找到 recipes</li>
+            <li>写第一个 recipe</li>
+        </ul>
+
+        <h2>2，添加一个 Recipe 到 Tutorial Layer</h2>
+        <p>Bitbake 需要知道一个 layer 提供了哪些 recipes，可以通过编辑 <code>meta-tutorial/conf/layer.conf</code> 文件告诉 bitbake 加载所有的 recipe：</p>
+
+        <pre><code>BBPATH .= ":${LAYERDIR}"
+BBFILES += "${LAYERDIR}/recipes-*/*/*.bb"</code></pre>
+
+        <p>recipe 文件的扩展名是 <code>.bb</code>，如果我们通过通配符的方式，只用一行就可以告诉 BitBake 加载所有 recipes。</p>
+
+        <p>通常 recipes 有自己的目录，并以 groups 的形式收集在一起，也就是说把有关联的 recipes 放在同一个目录。</p>
+
+        <p>现在 BitBake 已经知道从哪找 recipe，我们可以开始添加第一个 recipe 了。按通常的做法，我们创建目录 <code>meta-tutorial/recipes-tutorial/first</code>，并在此创建第一个 recipe。Recipe 文件也有通用的命名方法：<strong>{recipe}_{version}.bb</strong></p>
+
+        <h2>3，创建一个 Recipe 和 Task</h2>
+        <p>我们的第一个 recipe 只打印一些 log 信息。我们的第一个 recipe 是：<code>meta-tutorial/recipes-tutorial/first/first_0.1.bb</code></p>
+
+        <pre><code>DESCRIPTION = "I am the first recipe"   #description解释该recipe的用途
+PR = "r1"                               #内部修订数据，在每次修订后应被更新
+do_build () {                           #task do_build覆盖base.bbclass中的全局build task
+  echo "first: some shell script running as build"
+}</code></pre>
+
+        <p>如果上面都做对了，可以通过 <code>bitbake -s</code> 列出可用的 recipes：</p>
+
+        <pre><code>leon@leon-PC:~/Code/bitbake/bbTutorial/build$ bitbake -s
+Loading cache: 100% |                                                                         | ETA:  --:--:--
+Loaded 0 entries from dependency cache.
+Parsing recipes: 100% |########################################################################| Time: 0:00:00
+Parsing of 1 .bb files complete (0 cached, 1 parsed). 1 targets, 0 skipped, 0 masked, 0 errors.
+Recipe Name                                    Latest Version         Preferred Version
+===========                                    ==============         =================
+
+first                                                 :0.1-r1
+leon@leon-PC:~/Code/bitbake/bbTutorial/build$</code></pre>
+
+        <p>然后就可以执行 <code>bitbake first</code> 执行 first 组件：</p>
+
+        <pre><code>leon@leon-PC:~/Code/bitbake/bbTutorial/build$ bitbake first
+Loading cache: 100% |##########################################################################| Time: 0:00:00
+Loaded 1 entries from dependency cache.
+NOTE: Resolving any missing task queue dependencies
+Initialising tasks: 100% |#####################################################################| Time: 0:00:00
+NOTE: No setscene tasks
+NOTE: Executing Tasks
+NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
+leon@leon-PC:~/Code/bitbake/bbTutorial/build$</code></pre>
+
+        <p>现在检查 <code>tmp/work/first-0.1-r1/temp</code> 目录，里面有一些有趣的文件：</p>
+
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ ls -al tmp/work/first-0.1-r1/temp/
+total 20
+drwxrwxr-x 2 sunyongfeng sunyongfeng 4096 10月 20 11:19 .
+drwxrwxr-x 3 sunyongfeng sunyongfeng 4096 10月 20 11:19 ..
+lrwxrwxrwx 1 sunyongfeng sunyongfeng   18 10月 20 11:19 log.do_build -> log.do_build.17314
+-rw-rw-r-- 1 sunyongfeng sunyongfeng  123 10月 20 11:19 log.do_build.17314
+-rw-rw-r-- 1 sunyongfeng sunyongfeng   37 10月 20 11:19 log.task_order
+lrwxrwxrwx 1 sunyongfeng sunyongfeng   18 10月 20 11:19 run.do_build -> run.do_build.17314
+-rwxrwxr-x 1 sunyongfeng sunyongfeng  909 10月 20 11:19 run.do_build.17314
+
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/first-0.1-r1/temp/log.do_build.17314
+DEBUG: Executing shell function do_build
+first: some shell script running as build
+DEBUG: Shell function do_build finished
+
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/first-0.1-r1/temp/log.task_order
+do_build (17314): log.do_build.17314
+
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/first-0.1-r1/temp/run.do_build
+#!/bin/sh
+
+# Emit a useful diagnostic if something fails:
+bb_exit_handler() {
+    ret=$?
+    case $ret in
+    0)  ;;
+    *)  case $BASH_VERSION in
+        "")   echo "WARNING: exit code $ret from a shell command.";;
+        *)    echo "WARNING: ${BASH_SOURCE[0]}:${BASH_LINENO[0]} exit $ret from
+  "$BASH_COMMAND"";;
+        esac
+        exit $ret
+    esac
+}
+trap 'bb_exit_handler' 0
+set -e
+export HOME="/home/sunyongfeng"
+export SHELL="/bin/bash"
+export LOGNAME="sunyongfeng"
+export USER="sunyongfeng"
+export PATH="/home/sunyongfeng/ops-build.test/yocto/poky/scripts:/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
+export TERM="linux"
+do_build() {
+  echo "first: some shell script running as build"
+
+}
+
+cd '/home/sunyongfeng/workshop/test/tutorial/build'
+do_build
+
+# cleanup
+ret=$?
+trap '' 0
+exit $?</code></pre>
+
+        <h1>六，Classes 和 Functions</h1>
+
+        <p>下一步：</p>
+        <ul>
+            <li>添加一个 class</li>
+            <li>添加一个使用 class 的 recipe</li>
+            <li>探索 functions</li>
+        </ul>
+
+        <h2>1，创建 mybuild Class</h2>
+        <p>创建一个不同的 build 函数，并共享。</p>
+
+        <p>先在 tutorial layer 创建一个 class 文件：<code>meta-tutorial/classes/mybuild.bbclass</code></p>
+
+        <pre><code>addtask build
+mybuild_do_build () {
+   echo "running mybuild_do_build."
+}
+
+EXPORT_FUNCTIONS do_build</code></pre>
+
+        <p>在 <code>mybuild.bbclass</code> 中，我们添加了一个 build task，它也是一个简单的 shell 函数。<code>mybuild_do</code> 前缀的依据是 class 中 task 定义的规范 <strong>classname_do_functionname</strong>。</p>
+
+        <p><code>EXPORT_FUNCTIONS</code> 使该 build 函数可以被这个 class 的使用者使用，如果不添加这行，则它不会覆盖 base class 中的 build 函数。</p>
+
+        <p>现在，已可在第二个 recipe 中使用这个 class。</p>
+
+        <h2>2，在第二个 Recipe 中使用 myclass</h2>
+        <p>这里添加一个小目标，在 build 任务前先运行一个 patch 函数，这里需要一些 python 的用法。</p>
+
+        <p>依据 bitbake 的命名规范，我们添加一个新的 recipe 目录，并在该目录内添加一个 recipe 文件 <code>meta-tutorial/recipes-tutorial/second/second_1.0.bb</code>：</p>
+
+        <pre><code>DESCRIPTION = "I am he second recipe"
+PR = "r1"        #(1)像first recipe那样定义DESCRIPTION和PR
+inherit mybuild  #(2)继承mybuild class，让myclass_do_build成为默认build task
+
+def pyfunc(o):   #(3)纯python函数pyfunc获取一些参数，并根据该入参运行python dir函数
+    print(dir(o))
+
+python do_mypatch () {    #(4)bitbake python函数mypatch添加并注册成一个task，该task要在build函数前执行。
+  bb.note ("runnin mypatch")
+  pyfunc(d)    #(5)mypatch函数调用pyfunc函数，并传入全局bitbake变量d。d (datastore)由bitbake定义，并一直可用。
+}
+
+addtask mypatch before do_build #(6)mypatch函数被注册成一个task，并要求在build函数前执行。</code></pre>
+
+        <h2>3，探索 Recipes 和 Tasks</h2>
+        <p>现在我们有两个 recipes 可用，可探索一些新的 bitbake 命令选项。我们可以获取 BitBake 运行时 recipes 及其 tasks、控制过程的信息。</p>
+
+        <p>显示 recipes 和 tasks 列表：</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1676267625177-c5500e02-cda8-4820-acea-10f88f9ef4e4.png" alt="bitbake -s 列出recipes" referrerpolicy="no-referrer">
+
+        <p>如果想看某个 recipe 提供哪些 tasks，可以通过 <strong>bitbake -c listtasks recipe_name</strong> 查看：</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1676268007644-009691cc-e5c0-4651-95a7-bb778bc3fd1a.png" alt="bitbake -c listtasks 查看tasks" referrerpolicy="no-referrer">
+
+        <h2>4，执行 Tasks 或完整构建</h2>
+        <ul>
+            <li><strong>构建一个 recipe：</strong>使用 <code>bitbake recipe-name</code> 执行该 recipe 的所有 tasks</li>
+            <li><strong>执行一个 task：</strong>使用 <code>bitbake -c task recipe-name</code> 只运行 recipe-name 中的某个 task</li>
+            <li><strong>构建所有 recipe：</strong>使用 <code>bitbake world</code> 运行所有 recipe 的所有 tasks</li>
+        </ul>
+
+        <p>Bitbake 创建一个 <code>tmp/work</code> 目录存放所有的 log 文件。这些 log 文件包含一些有趣的信息，值得一学。第一次执行完 <code>bitbake world</code>，其输出为：</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1676271306397-e28d1afd-9392-4623-a67f-00f324aed7bf.png" alt="bitbake world 执行结果" referrerpolicy="no-referrer">
+
+        <h1>七，Bitbake Layers</h1>
+
+        <p>典型 BitBake 工程包含多个 layer。通常 layer 包含一个特定主题，比如基础系统、图像系统等。一些工程可以包括不止一个构建目标，每个目标由不同的 layers 组成。例如，构建一个带 GUI 组件或不带 GUI 组件的 Linux 发行版本。</p>
+
+        <h2>1，添加一个 Layer</h2>
+        <p>通过以下步骤添加一个新的 layer：</p>
+        <ul>
+            <li><strong>创建一个新的 layer 目录</strong> — 创建一个新的目录叫 <code>meta-two</code></li>
+        </ul>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1676271650995-238d0e84-1fc6-4cf9-a957-d98c4433f45b.png" alt="创建meta-two目录" referrerpolicy="no-referrer">
+
+        <ul>
+            <li><strong>创建 layer 配置</strong> — 添加 <code>meta-two/conf/layer.conf</code> 文件，该文件和 tutorial layer 的一样：</li>
+        </ul>
+
+        <pre><code>BBPATH .= ":${LAYERDIR}"
+BBFILES += "${LAYERDIR}/recipes-*/*/*.bb"</code></pre>
+
+        <ul>
+            <li><strong>告诉 bitbake 有新的 layer</strong> — 编辑 <code>build/conf/bblayers.conf</code>，扩展 <code>BBLAYERS</code> 变量：</li>
+        </ul>
+
+        <pre><code>BBLAYERS = " \
+  ${TOPDIR}/../meta-tutorial \
+  ${TOPDIR}/../meta-two \
+"</code></pre>
+
+        <ul>
+            <li><strong>添加 recipes 到 layer</strong></li>
+        </ul>
+
+        <h2>2，bitbake-layers 命令</h2>
+        <p>通过 <code>bitbake-layers</code> 命令检查新 layer 的配置。</p>
+
+        <p>首先使用 <code>show-layers</code> 参数，显示该工程的 layers、layers 的路径和优先级。这里优先级都是0，后面会尝试修改：</p>
+
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake-layers show-layers
+layer                 path                                      priority
+==========================================================================
+meta-tutorial         /home/sunyongfeng/workshop/test/tutorial/build/../meta-tutorial  0
+meta-two              /home/sunyongfeng/workshop/test/tutorial/build/../meta-two  0</code></pre>
+
+        <p>bitbake-layers 命令还有其他有用的选项，可通过 <code>-h</code> 选项显示：</p>
+
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake-layers -h
+usage: bitbake-layers [-h] [-d] [-q] <subcommand> ...
+
+BitBake layers utility
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -d, --debug           Enable debug output
+  -q, --quiet           Print only errors
+
+subcommands:
+  <subcommand>
+    show-layers         show current configured layers
+    add-layer           Add a layer to bblayers.conf
+    remove-layer        Remove a layer from bblayers.conf
+    show-overlayed      list overlayed recipes (where the same recipe exists
+                        in another layer)
+    show-recipes        list available recipes, showing the layer they are
+                        provided by
+    show-appends        list bbappend files and recipe files they apply to
+    flatten             flatten layer configuration into a separate output
+                        directory.
+    show-cross-depends  Show dependencies between recipes that cross layer
+                        boundaries.
+    layerindex-fetch    Fetches a layer from a layer index along with its
+                        dependent layers, and adds them to conf/bblayers.conf.
+    layerindex-show-depends
+                        Find layer dependencies from layer index.
+
+Use bitbake-layers <subcommand> --help to get help on a specific command</code></pre>
+
+        <h2>3，扩展 Layer 配置</h2>
+        <p>在 layer 的 <code>layer.conf</code> 文件中，定义优先级和其他配置值。为配置 layer 的优先级，需要添加新的定义到已有的 <code>layer.conf</code>。以 <code>meta-tutorial/conf/layer.conf</code> 开始，添加：</p>
+
+        <pre><code># append layer name to list of configured layers
+BBFILE_COLLECTIONS += "tutorial"
+# and use name as suffix for other properties
+BBFILE_PATTERN_tutorial = "^${LAYERDIR}/"
+BBFILE_PRIORITY_tutorial = "5"
+LAYERSERIES_CORENAMES = "bitbakeguilde"
+LAYERVERSION_tutorial = "1"
+LAYERSERIES_COMPAT_tutorial = "bitbakeguilde"</code></pre>
+
+        <p>使用的变量在 BitBake 使用手册有很好的说明，这里不重复。这里使用 layer 的名字做为其他变量的后缀。</p>
+
+        <p>同样的，修改 <code>meta-two/conf/layer.conf</code>：</p>
+
+        <pre><code>BBFILE_COLLECTIONS += "two"
+BBFILE_PATTERN_two = "^${LAYERDIR}/"
+BBFILE_PRIORITY_two = "5"
+LAYERVERSION_two = "1"
+LAYERDEPENDS_two = "tutorial"
+LAYERSERIES_COMPAT_two = "bitbakeguilde"</code></pre>
+
+        <p>如果此时运行 <code>bitbake-layers show-layers</code>，结果是：</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1676272770009-1a5123af-97d3-48ff-a535-f46df34e21dd.png" alt="bitbake-layers show-layers 显示优先级" referrerpolicy="no-referrer">
+
+        <h1>八，共享和重用配置</h1>
+
+        <h2>1，Class 继承</h2>
+        <p>为实现 configure-build 链，这里创建一个 class，该 class 继承 mybuild，并简单添加一个 configure task，让 build task 依赖 configure task。</p>
+
+        <p><strong>meta-two/classes/confbuild.bbclass：</strong></p>
+        <pre><code>inherit mybuild                            #(1)以mybuild class为基础
+
+confbuild_do_configure () {                #(2)创建新的函数：classname_do_functionname
+  echo "running configbuild_do_configure."
+ }
+
+addtask do_configure before do_build       #(3)定义函数的顺序，configre在build之前；
+
+EXPORT_FUNCTIONS do_configure             #(4) export使刚创建的函数可用</code></pre>
+
+        <p>然后创建 third recipe 使用 confbuild class。</p>
+
+        <p><strong>meta-two/recipe-base/third_01.bb</strong></p>
+        <pre><code>DESCRIPTION = "I am the third recipe"
+PR = "r1"
+inherit confbuild</code></pre>
+
+        <p>这时运行 <code>bitbake third</code> 会执行 configure task 和 build task：</p>
+
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake third
+Parsing recipes: 100% |######################################################################################################################################| Time: 00:00:00
+Parsing of 3 .bb files complete (0 cached, 3 parsed). 3 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+NOTE: Preparing RunQueue
+NOTE: Executing RunQueue Tasks
+NOTE: Tasks Summary: Attempted 2 tasks of which 0 didn't need to be rerun and all succeeded.
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/third-01-r1/temp/
+log.do_build            log.do_configure        log.task_order          run.do_build.19728      run.do_configure.19726  
+log.do_build.19728      log.do_configure.19726  run.do_build            run.do_configure     
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/third-01-r1/temp/log.task_order 
+do_configure (19726): log.do_configure.19726
+do_build (19728): log.do_build.19728
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/third-01-r1/temp/log.do_configure
+DEBUG: Executing shell function do_configure
+running configbuild_do_configure.
+DEBUG: Shell function do_configure finished
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/third-01-r1/temp/log.do_build
+DEBUG: Executing shell function do_build
+running mybuild_do_build.
+DEBUG: Shell function do_build finished</code></pre>
+
+        <h2>2，bbappend 文件</h2>
+        <p>append 文件可以添加函数到已有 recipe 中，而不需要创新一个新的 recipe。它是向同名 recipe 添加内容的文本。</p>
+
+        <p>需要先设置 layer 的配置文件，才能加载到对应的 append 文件。因此需要改变 layer 的配置文件，添加加载 <code>*.bbappend</code> 文件的配置到 <code>BBFILES</code> 变量。</p>
+
+        <p><strong>meta-two/conf/layer.conf:</strong></p>
+        <pre><code>python do_patch () {
+  bb.note ("first:do_patch")
+}
+
+addtask patch before do_build</code></pre>
+
+        <p>此时若列出 first recipe 的 task 列表，可以看到 patch task。</p>
+
+        <p>添加前：</p>
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake -c listtasks first
+Parsing recipes: 100% |################################################################################| Time: 00:00:00
+Parsing of 3 .bb files complete (0 cached, 3 parsed). 3 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+NOTE: Preparing RunQueue
+NOTE: Executing RunQueue Tasks
+do_showdata
+do_build
+do_listtasks
+NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.</code></pre>
+
+        <p>添加 bbappend 文件后：</p>
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake -c listtasks first
+Parsing recipes: 100% |################################################################################| Time: 00:00:00
+Parsing of 3 .bb files complete (0 cached, 3 parsed). 3 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+NOTE: Preparing RunQueue
+NOTE: Executing RunQueue Tasks
+do_showdata
+do_build
+do_listtasks
+do_patch
+NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.</code></pre>
+
+        <p>运行 <code>bitbake first</code> 结果：</p>
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake first
+Parsing recipes: 100% |################################################################################| Time: 00:00:00
+Parsing of 3 .bb files complete (0 cached, 3 parsed). 3 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+NOTE: Preparing RunQueue
+NOTE: Executing RunQueue Tasks
+NOTE: Tasks Summary: Attempted 2 tasks of which 0 didn't need to be rerun and all succeeded.
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/first-0.1-r1/temp/
+log.do_build            log.do_listtasks.20111  run.do_build            run.do_listtasks.20111
+log.do_build.20152      log.do_patch            run.do_build.20152      run.do_patch
+log.do_listtasks        log.do_patch.20151      run.do_listtasks        run.do_patch.20151
+log.do_listtasks.20001  log.task_order          run.do_listtasks.20001  
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/first-0.1-r1/temp/log.task_order 
+do_listtasks (20001): log.do_listtasks.20001
+do_listtasks (20111): log.do_listtasks.20111
+do_patch (20151): log.do_patch.20151
+do_build (20152): log.do_build.20152
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ </code></pre>
+
+        <h2>3，include 文件</h2>
+        <p>Bitbake 有两种指令引用文件：</p>
+        <ul>
+            <li><code>include filename</code>：这是一种可选引用，如果 filename 找不到，不会有 error 产生</li>
+            <li><code>require filename</code>：如果 filename 没找到，会产生 error</li>
+        </ul>
+
+        <p>值得一提的是，<code>include</code> 和 <code>require</code> 都是在 <code>BBPATH</code> 中指定的目录查找 filename。</p>
+
+        <p>BitBake 工程通常使用 <code>bitbake.conf</code> 引用一个位于 build 目录内的 <code>local.conf</code> 文件。<code>local.conf</code> 文件可能包含一些当前构建目标相关的特殊设置。</p>
+
+        <p>这里模仿 <code>local.conf</code> 的典型应用，让 <code>bitbake.conf</code> require 引用 <code>local.conf</code>，添加以下内容到 <code>meta-tutorial/conf/bitbake.conf</code>：</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2023/png/21632762/1676276461537-44256e8a-389c-4c08-b77c-69782517c143.png" alt="include和require配置" referrerpolicy="no-referrer">
+
+        <p>如果此时执行构建命令，bitbake 会产生类似以下的错误信息：</p>
+
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake world
+ERROR: Traceback (most recent call last):
+  File "/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/lib/bb/cookerdata.py", line 175, in wrapped
+    return func(fn, *args)
+  File "/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/lib/bb/cookerdata.py", line 185, in parse_config_file
+    return bb.parse.handle(fn, data, include)
+  File "/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/lib/bb/parse/__init__.py", line 107, in handle
+    return h['handle'](fn, data, include)
+  File "/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 148, in handle
+    statements.eval(data)
+  File "/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/lib/bb/parse/ast.py", line 39, in eval
+    statement.eval(data)
+  File "/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/lib/bb/parse/ast.py", line 61, in eval
+    bb.parse.ConfHandler.include(self.filename, s, self.lineno, data, "include required")
+  File "/home/sunyongfeng/ops-build.test/yocto/poky/bitbake/lib/bb/parse/parse_py/ConfHandler.py", line 98, in include
+    raise ParseError("Could not %(error_out)s file %(fn)s" % vars(), parentfn, lineno)
+ParseError: ParseError at /home/sunyongfeng/workshop/test/tutorial/build/../meta-tutorial/conf/bitbake.conf:53: Could not include required file local.conf
+
+ERROR: Unable to parse conf/bitbake.conf: ParseError at /home/sunyongfeng/workshop/test/tutorial/build/../meta-tutorial/conf/bitbake.conf:53: Could not include required file local.conf</code></pre>
+
+        <p>添加一个 <code>local.conf</code> 文件到 build 目录可解决此问题。注意，<code>include</code> 语句包含的文件可有可无。</p>
+
+        <h1>九，使用变量</h1>
+
+        <h2>1，全局变量</h2>
+        <p>全局变量可以通过配置文件设置，recipe 可以使用。</p>
+
+        <p>刚才已经创建了一个空的 <code>local.conf</code>，现在在这个文件中加一些变量。比如添加一行：</p>
+
+        <pre><code>MYVAR="hello from MYVAR"</code></pre>
+
+        <p>可以在 recipe 或 class 中访问 <code>MYVAR</code> 变量。这里创建一个新的 recipes 组 <code>recipe-vars</code> 和一个 recipe <code>myvar</code></p>
+
+        <p><strong>meta-two/recipes-vars/myvar/myvar_0.1.bb</strong></p>
+        <pre><code>DESCRIPTION = "Show access to global MYVAR"
+PR = "r1"
+
+do_build(){
+  echo "myvar_sh: ${MYVAR}"                  #(1)在类 bash 语法中访问变量
+}
+
+python do_myvar_py () {
+  print(d.getVar('MYVAR', True))             #(2)通过全局数据存储访问变量
+}
+
+addtask myvar_py before do_build</code></pre>
+
+        <p>现在运行 <code>bitbake myvar</code>，检查 tmp 目录的输出，可以看到我们确实访问了全局 <code>MYVAR</code> 变量。</p>
+
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake myvar
+Parsing recipes: 100% |################################################################################| Time: 00:00:00
+Parsing of 4 .bb files complete (0 cached, 4 parsed). 4 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+NOTE: Preparing RunQueue
+NOTE: Executing RunQueue Tasks
+NOTE: Tasks Summary: Attempted 2 tasks of which 0 didn't need to be rerun and all succeeded.
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ 
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/myvar-0.1-r1/temp/log.task_order 
+do_myvar_py (4595): log.do_myvar_py.4595
+do_build (4596): log.do_build.4596
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/myvar-0.1-r1/temp/log.do_myvar_py
+DEBUG: Executing python function do_myvar_py
+myvar_py:hello from MYVAR
+DEBUG: Python function do_myvar_py finished
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/myvar-0.1-r1/temp/log.do_build
+DEBUG: Executing shell function do_build
+myvar_sh: hello from MYVAR
+DEBUG: Shell function do_build finished</code></pre>
+
+        <h2>2，本地变量</h2>
+        <p>典型的 recipe 只包含一些本地变量，这些变量用于其继承的 classes 中的函数设置。</p>
+
+        <p>先创建 <code>meta-two/classes/varbuild.bbclass</code>：</p>
+        <pre><code>varbuild_do_build () {
+  echo "build with args: ${BUILDARGS}"
+}
+
+addtask build
+
+EXPORT_FUNCTIONS do_build</code></pre>
+
+        <p>然后在 <code>meta-two/recipes-vars/varbuild/varbuild_0.1.bb</code> 中继承</p>
+        <pre><code>DESCRIPTION = "Demonstrate variable usage for setting up a class task"
+PR = "r1"
+
+BUILDARGS = "my build arguments"
+
+inherit varbuild</code></pre>
+
+        <p>运行 <code>bitbake varbuild</code>，输出的 log 显示 build 任务使用了 recipe 设置的变量值。</p>
+
+        <pre><code>sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ bitbake varbuild
+Parsing recipes: 100% |################################################################################| Time: 00:00:00
+Parsing of 5 .bb files complete (0 cached, 5 parsed). 5 targets, 0 skipped, 0 masked, 0 errors.
+NOTE: Resolving any missing task queue dependencies
+NOTE: Preparing RunQueue
+NOTE: Executing RunQueue Tasks
+NOTE: Tasks Summary: Attempted 1 tasks of which 0 didn't need to be rerun and all succeeded.
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/varbuild-0.1-r1/temp/log.task_order 
+do_build (4760): log.do_build.4760
+
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ cat tmp/work/varbuild-0.1-r1/temp/log.do_build
+DEBUG: Executing shell function do_build
+build with args: my build arguments
+DEBUG: Shell function do_build finished
+sunyongfeng@openswitch-OptiPlex-380:~/workshop/test/tutorial/build$ </code></pre>
+
+        <p class="highlight-red">这是使用 bitbake 的典型方法。通用 task 由 class 定义，比如下载源代码、configure、make 和其他操作，recipe 设置这些 task 所需要的变量。</p>
+    </div>
+
+    <!-- 看板娘初始化 -->
+    <script src="../../kanbanJS/new/live2d_demo/assets/waifu-tips.js"></script>
+    <script src="../../kanbanJS/new/live2d_demo/assets/live2d.js"></script>
+    <script type="text/javascript">
+        live2d_settings['modelId'] = 1;
+        live2d_settings['modelTexturesId'] = 87;
+        initModel("../../kanbanJS/new/live2d_demo/assets/waifu-tips.json")
+    </script>
+
+    <!-- 特效脚本 -->
+    <script src="../../Effects/backgroundEffect/sakura.js"></script>
+    <script src="../../Effects/mouseSpecialEffects/mouseStar/cursor-meteor.js"></script>
+
+    <!-- 图片错误处理 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && src.includes('cdn.nlark.com')) {
+                    img.setAttribute('referrerpolicy', 'no-referrer');
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        this.insertAdjacentHTML('afterend', '<p class="img-error">⚠️ 图片加载失败，请手动下载并替换为本地路径</p>');
+                    };
+                }
+            });
+        });
+    </script>
+</body>
+</html>

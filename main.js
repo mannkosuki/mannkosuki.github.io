@@ -23,6 +23,9 @@ const articles = [
 
     { title: "网卡监控协议", desc: "mctp协议作为网卡最常用的通信协议，需要知道些什么？",
     path: "./article/article5/index.html", cover: "./images/article/homepageArticlePicture/article5/cover_nic_protocol.png" },
+
+    { title: "bitbake实用指南", desc: "bitbake 使用指南",
+    path: "./article/article6/index.html", cover: "./images/article/homepageArticlePicture/article6/bitbake.png" },
   ];
   
   // ==============================
