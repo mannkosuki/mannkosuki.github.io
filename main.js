@@ -2,151 +2,357 @@
 // 文章数据
 // ==============================
 const articles = [
-    // { title: "I2C tool的使用", desc: "作为实际应用中最常见的工具，如何优雅地使用？", path: "./article/article1/index.html", cover: "https://picsum.photos/400/300?random=1" },
-    // { title: "BMC基础通信D-BUS编码规范", desc: "BMC 固件基于OpenBMC框架进行开发与演进。OpenBMC 以 systemd 及其管理的各类服务为核心，构建了完整的服务器管理与监控体系。系统中，每个服务均以独立进程的形式在后台运行。为了实现各服务之间的数据交互与协同，OpenBMC需要借助进程间通信(IPC)机制来完成信息传递。", path: "./article/article2/index.html", cover: "https://picsum.photos/400/300?random=2" },
-    // { title: "DBus常用命令", desc: "作为日常最常使用的debug手段，如何熟练使用？", path: "./article/article3/index.html", cover: "https://picsum.photos/400/300?random=3" },
-    // { title: "异步编程方式介绍", desc: "作为openBMC最常使用的异步编程，如何正确地使用？", path: "./article/article4/index.html", cover: "https://picsum.photos/400/300?random=4" },
-    { title: "I2C tool的使用", desc: "作为实际应用中最常见的工具，如何优雅地使用？",
-      path: "./article/article1/index.html", cover: "./images/article/homepageArticlePicture/article1/i2ctool.png" },
+  { title: "I2C tool的使用", desc: "作为实际应用中最常见的工具，如何优雅地使用？",
+    path: "./article/article1/index.html", cover: "./images/article/homepageArticlePicture/article1/i2ctool.png" },
 
-    { title: "BMC基础通信D-BUS编码规范",
-      desc: "BMC 固件基于OpenBMC框架进行开发与演进。OpenBMC 以 systemd 及其管理的各类服务为核心，"
-        +"构建了完整的服务器管理与监控体系。系统中，每个服务均以独立进程的形式在后台运行。为了实现各服务之间的数据交互与协同，"
-        +"OpenBMC需要借助进程间通信(IPC)机制来完成信息传递。",
-      path: "./article/article2/index.html", cover: "./images/article/homepageArticlePicture/article2/cover_dbus.png" },
+  { title: "BMC基础通信D-BUS编码规范",
+    desc: "BMC 固件基于OpenBMC框架进行开发与演进。OpenBMC 以 systemd 及其管理的各类服务为核心，"
+      +"构建了完整的服务器管理与监控体系。系统中，每个服务均以独立进程的形式在后台运行。为了实现各服务之间的数据交互与协同，"
+      +"OpenBMC需要借助进程间通信(IPC)机制来完成信息传递。",
+    path: "./article/article2/index.html", cover: "./images/article/homepageArticlePicture/article2/cover_dbus.png" },
 
-    { title: "DBus常用命令", desc: "作为日常最常使用的debug手段，如何熟练使用？",
-      path: "./article/article3/index.html", cover: "./images/article/homepageArticlePicture/article3/cover_dbus_cmd.png" },
+  { title: "DBus常用命令", desc: "作为日常最常使用的debug手段，如何熟练使用？",
+    path: "./article/article3/index.html", cover: "./images/article/homepageArticlePicture/article3/cover_dbus_cmd.png" },
 
-    { title: "异步编程方式介绍", desc: "作为openBMC最常使用的异步编程，如何正确地使用？",
-      path: "./article/article4/index.html", cover: "./images/article/homepageArticlePicture/article4/cover_async.png" },
+  { title: "异步编程方式介绍", desc: "作为openBMC最常使用的异步编程，如何正确地使用？",
+    path: "./article/article4/index.html", cover: "./images/article/homepageArticlePicture/article4/cover_async.png" },
 
-    { title: "网卡监控协议", desc: "mctp协议作为网卡最常用的通信协议，需要知道些什么？",
-    path: "./article/article5/index.html", cover: "./images/article/homepageArticlePicture/article5/cover_nic_protocol.png" },
+  { title: "网卡监控协议", desc: "mctp协议作为网卡最常用的通信协议，需要知道些什么？",
+  path: "./article/article5/index.html", cover: "./images/article/homepageArticlePicture/article5/cover_nic_protocol.png" },
 
-    { title: "bitbake实用指南", desc: "bitbake 使用指南",
-    path: "./article/article6/index.html", cover: "./images/article/homepageArticlePicture/article6/bitbake.png" },
+  { title: "bitbake实用指南", desc: "bitbake 使用指南",
+  path: "./article/article6/index.html", cover: "./images/article/homepageArticlePicture/article6/bitbake.png" },
 
-    { title: "Bitbake 构建流程与变量详解", desc: "bitbake 是如何从bb 文件到编译出包的？",
-    path: "./article/article7/index.html", cover: "./images/article/homepageArticlePicture/article7/bitbake_compile.png" },
-  ];
-  
-  // ==============================
-  // 分页配置
-  // ==============================
-  const PAGE_SIZE = 10; // 每页10篇
-  let currentPage = 1;
-  
-  // ==============================
-  // 渲染当前页文章
-  // ==============================
-  function renderArticles() {
-    const list = document.getElementById("articleList");
-    const pagination = document.getElementById("pagination");
-    list.innerHTML = "";
-  
-    // 计算分页
-    const total = articles.length;
-    const totalPage = Math.ceil(total / PAGE_SIZE);
-    const start = (currentPage - 1) * PAGE_SIZE;
-    const end = start + PAGE_SIZE;
-    const pageData = articles.slice(start, end);
-  
-    // 渲染文章
-    pageData.forEach((art, index) => {
-        const globalIndex = (currentPage - 1) * PAGE_SIZE + index;
-        const isRight = globalIndex % 2 === 1;
-      
-        list.innerHTML += `
-        <a class="article-card ${isRight ? 'article-card-reverse' : ''}" href="${art.path}">
-            <div class="card-text">
-                <div class="card-title">${art.title}</div>
-                <div class="card-excerpt">${art.desc}</div>
-            </div>
-            <div class="card-image" style="background-image: url('${art.cover || ''}');"></div>
-        </a>`;
-    });
-  
-    // 渲染分页按钮
-    renderPagination(totalPage);
-  }
-  
-  // ==============================
-  // 渲染分页按钮
-  // ==============================
-  function renderPagination(totalPage) {
-    const el = document.getElementById("pagination");
-    el.innerHTML = "";
-  
-    if (totalPage <= 1) return;
-  
-    // 首页
-    const first = createBtn("首页", currentPage === 1, () => {
-      currentPage = 1;
-      renderArticles();
-    });
-  
-    // 上一页
-    const prev = createBtn("上一页", currentPage === 1, () => {
-      currentPage--;
-      renderArticles();
-    });
-  
-    el.appendChild(first);
-    el.appendChild(prev);
-  
-    // 数字页
-    for (let i = 1; i <= totalPage; i++) {
-      const num = createBtn(i, false, () => {
-        currentPage = i;
-        renderArticles();
-      });
-      if (i === currentPage) num.classList.add("active");
-      el.appendChild(num);
-    }
-  
-    // 下一页
-    const next = createBtn("下一页", currentPage === totalPage, () => {
-      currentPage++;
-      renderArticles();
-    });
-  
-    // 尾页
-    const last = createBtn("尾页", currentPage === totalPage, () => {
-      currentPage = totalPage;
-      renderArticles();
-    });
-  
-    el.appendChild(next);
-    el.appendChild(last);
-  }
-  
-  // 按钮生成工具
-  function createBtn(text, disabled, click) {
-    const btn = document.createElement("button");
-    btn.innerText = text;
-    btn.disabled = disabled;
-    btn.onclick = click;
-    return btn;
-  }
+  { title: "Bitbake 构建流程与变量详解", desc: "bitbake 是如何从bb 文件到编译出包的？",
+  path: "./article/article7/index.html", cover: "./images/article/homepageArticlePicture/article7/bitbake_compile.png" },
+];
 
 // ==============================
-// 音乐
+// 分页配置
+// ==============================
+const PAGE_SIZE = 10; // 每页10篇
+let currentPage = 1;
+
+// ==============================
+// 渲染当前页文章
+// ==============================
+function renderArticles() {
+  const list = document.getElementById("articleList");
+  const pagination = document.getElementById("pagination");
+  list.innerHTML = "";
+
+  // 计算分页
+  const total = articles.length;
+  const totalPage = Math.ceil(total / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const end = start + PAGE_SIZE;
+  const pageData = articles.slice(start, end);
+
+  // 渲染文章
+  pageData.forEach((art, index) => {
+      const globalIndex = (currentPage - 1) * PAGE_SIZE + index;
+      const isRight = globalIndex % 2 === 1;
+
+      list.innerHTML += `
+      <a class="article-card ${isRight ? 'article-card-reverse' : ''}" href="${art.path}">
+          <div class="card-text">
+              <div class="card-title">${art.title}</div>
+              <div class="card-excerpt">${art.desc}</div>
+          </div>
+          <div class="card-image" style="background-image: url('${art.cover || ''}');"></div>
+      </a>`;
+  });
+
+  // 渲染分页按钮
+  renderPagination(totalPage);
+}
+
+// ==============================
+// 渲染分页按钮
+// ==============================
+function renderPagination(totalPage) {
+  const el = document.getElementById("pagination");
+  el.innerHTML = "";
+
+  if (totalPage <= 1) return;
+
+  // 首页
+  const first = createBtn("首页", currentPage === 1, () => {
+    currentPage = 1;
+    renderArticles();
+  });
+
+  // 上一页
+  const prev = createBtn("上一页", currentPage === 1, () => {
+    currentPage--;
+    renderArticles();
+  });
+
+  el.appendChild(first);
+  el.appendChild(prev);
+
+  // 数字页
+  for (let i = 1; i <= totalPage; i++) {
+    const num = createBtn(i, false, () => {
+      currentPage = i;
+      renderArticles();
+    });
+    if (i === currentPage) num.classList.add("active");
+    el.appendChild(num);
+  }
+
+  // 下一页
+  const next = createBtn("下一页", currentPage === totalPage, () => {
+    currentPage++;
+    renderArticles();
+  });
+
+  // 尾页
+  const last = createBtn("尾页", currentPage === totalPage, () => {
+    currentPage = totalPage;
+    renderArticles();
+  });
+
+  el.appendChild(next);
+  el.appendChild(last);
+}
+
+// 按钮生成工具
+function createBtn(text, disabled, click) {
+  const btn = document.createElement("button");
+  btn.innerText = text;
+  btn.disabled = disabled;
+  btn.onclick = click;
+  return btn;
+}
+
+// ==============================
+// 音乐播放器
 // ==============================
 const musics = [
-    "./music/nanndemonaiya.mp3",
-    "./music/yakimochi.mp3",
-    "./music/hanabiwouchiageru.mp3",
+  { name: "なんでもないや", path: "./music/nanndemonaiya.mp3" },
+  { name: "ヤキモチ", path: "./music/yakimochi.mp3" },
+  { name: "打上花火", path: "./music/hanabiwouchiageru.mp3" },
 ];
-const bgm = document.getElementById("bgm");
-bgm.innerHTML = `<source src="${musics[Math.floor(Math.random() * musics.length)]}" type="audio/mpeg">`;
 
-window.addEventListener("load", () => {
-    document.addEventListener('click', () => bgm.play(), { once: true });
-});
+const bgm = document.getElementById("bgm");
+let currentTrackIndex = 0;
+let playMode = "order"; // "order" | "loop" | "random"
+let isFirstPlay = true;
+
+// 初始化播放器UI
+function initMusicPlayer() {
+  const musicControl = document.querySelector(".music-control");
+  if (!musicControl) return;
+
+  // 创建播放器容器
+  const playerContainer = document.createElement("div");
+  playerContainer.className = "music-player-container";
+  musicControl.parentNode.insertBefore(playerContainer, musicControl);
+
+  // 上一首按钮
+  const prevBtn = document.createElement("button");
+  prevBtn.className = "music-btn music-prev";
+  prevBtn.innerHTML = "⏮";
+  prevBtn.title = "上一首";
+  prevBtn.onclick = playPrev;
+  playerContainer.appendChild(prevBtn);
+
+  // 播放/暂停按钮（替换原来的音乐按钮）
+  const playBtn = document.createElement("button");
+  playBtn.className = "music-btn music-play";
+  playBtn.innerHTML = "▶";
+  playBtn.title = "播放/暂停";
+  playBtn.onclick = toggleMusic;
+  playerContainer.appendChild(playBtn);
+
+  // 下一首按钮
+  const nextBtn = document.createElement("button");
+  nextBtn.className = "music-btn music-next";
+  nextBtn.innerHTML = "⏭";
+  nextBtn.title = "下一首";
+  nextBtn.onclick = playNext;
+  playerContainer.appendChild(nextBtn);
+
+  // 模式切换按钮
+  const modeBtn = document.createElement("button");
+  modeBtn.className = "music-btn music-mode";
+  modeBtn.innerHTML = getModeIcon(playMode);
+  modeBtn.title = getModeTitle(playMode);
+  modeBtn.onclick = () => {
+      cyclePlayMode();
+      modeBtn.innerHTML = getModeIcon(playMode);
+      modeBtn.title = getModeTitle(playMode);
+  };
+  playerContainer.appendChild(modeBtn);
+
+  // 播放列表按钮
+  const listBtn = document.createElement("button");
+  listBtn.className = "music-btn music-list";
+  listBtn.innerHTML = "☰";
+  listBtn.title = "播放列表";
+  listBtn.onclick = togglePlaylist;
+  playerContainer.appendChild(listBtn);
+
+  // 当前曲目显示
+  const trackInfo = document.createElement("div");
+  trackInfo.className = "music-track-info";
+  trackInfo.innerHTML = `<span class="track-name">${musics[currentTrackIndex].name}</span>`;
+  playerContainer.appendChild(trackInfo);
+
+  // 播放列表弹窗
+  const playlistPopup = document.createElement("div");
+  playlistPopup.className = "music-playlist-popup";
+  playlistPopup.id = "playlistPopup";
+  playlistPopup.style.display = "none";
+
+  let playlistHtml = '<div class="playlist-header">播放列表</div><div class="playlist-items">';
+  musics.forEach((m, i) => {
+      playlistHtml += `<div class="playlist-item ${i === currentTrackIndex ? 'active' : ''}" data-index="${i}">
+          <span class="item-index">${i + 1}</span>
+          <span class="item-name">${m.name}</span>
+          <span class="item-status">${i === currentTrackIndex ? '▶' : ''}</span>
+      </div>`;
+  });
+  playlistHtml += '</div>';
+  playlistPopup.innerHTML = playlistHtml;
+  playerContainer.appendChild(playlistPopup);
+
+  // 播放列表点击事件
+  playlistPopup.addEventListener("click", (e) => {
+      const item = e.target.closest(".playlist-item");
+      if (item) {
+          const idx = parseInt(item.dataset.index);
+          playTrack(idx);
+          togglePlaylist();
+      }
+  });
+
+  // 隐藏原来的音乐按钮
+  musicControl.style.display = "none";
+
+  // 绑定 ended 事件
+  bgm.addEventListener("ended", onTrackEnded);
+  bgm.addEventListener("play", updatePlayButton);
+  bgm.addEventListener("pause", updatePlayButton);
+}
+
+// function getModeIcon(mode) {
+//   switch(mode) {
+//       case "loop": return "🔂";
+//       case "random": return "🔀";
+//       default: return "🔁";
+//   }
+// }
+
+function getModeIcon(mode) {
+  const color = "#555"; // 统一灰色
+  switch(mode) {
+      case "loop":
+          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>`;
+      case "random":
+          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l5 5"/><path d="M4 4l5 5"/></svg>`;
+      default:
+          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>`;
+  }
+}
+
+function getModeTitle(mode) {
+  switch(mode) {
+      case "loop": return "单曲循环";
+      case "random": return "随机播放";
+      default: return "顺序播放";
+  }
+}
+
+function cyclePlayMode() {
+  if (playMode === "order") playMode = "loop";
+  else if (playMode === "loop") playMode = "random";
+  else playMode = "order";
+}
+
+function loadTrack(index) {
+  currentTrackIndex = index;
+  bgm.innerHTML = `<source src="${musics[index].path}" type="audio/mpeg">`;
+  bgm.load();
+  updateTrackInfo();
+  updatePlaylistUI();
+}
+
+function playTrack(index) {
+  loadTrack(index);
+  bgm.play().catch(() => {});
+}
+
+function playNext() {
+  let nextIndex;
+  if (playMode === "random") {
+      nextIndex = Math.floor(Math.random() * musics.length);
+  } else {
+      nextIndex = (currentTrackIndex + 1) % musics.length;
+  }
+  playTrack(nextIndex);
+}
+
+function playPrev() {
+  let prevIndex;
+  if (playMode === "random") {
+      prevIndex = Math.floor(Math.random() * musics.length);
+  } else {
+      prevIndex = (currentTrackIndex - 1 + musics.length) % musics.length;
+  }
+  playTrack(prevIndex);
+}
+
+function onTrackEnded() {
+  if (playMode === "loop") {
+      bgm.currentTime = 0;
+      bgm.play();
+  } else {
+      playNext();
+  }
+}
 
 function toggleMusic() {
-    bgm.paused ? bgm.play() : bgm.pause();
+  if (isFirstPlay) {
+      loadTrack(currentTrackIndex);
+      isFirstPlay = false;
+  }
+  if (bgm.paused) {
+      bgm.play().catch(() => {});
+  } else {
+      bgm.pause();
+  }
+}
+
+function updatePlayButton() {
+  const playBtn = document.querySelector(".music-play");
+  if (playBtn) {
+      playBtn.innerHTML = bgm.paused ? "▶" : "⏸";
+  }
+}
+
+function updateTrackInfo() {
+  const trackInfo = document.querySelector(".music-track-info .track-name");
+  if (trackInfo) {
+      trackInfo.innerText = musics[currentTrackIndex].name;
+  }
+}
+
+function updatePlaylistUI() {
+  const items = document.querySelectorAll(".playlist-item");
+  items.forEach((item, i) => {
+      item.classList.toggle("active", i === currentTrackIndex);
+      const status = item.querySelector(".item-status");
+      if (status) status.innerText = i === currentTrackIndex ? "▶" : "";
+  });
+}
+
+function togglePlaylist() {
+  const popup = document.getElementById("playlistPopup");
+  if (popup) {
+      popup.style.display = popup.style.display === "none" ? "block" : "none";
+  }
 }
 
 // ==============================
@@ -157,25 +363,25 @@ const container = document.getElementById("textContainer");
 const letters = [];
 
 for (let i = 0; i < text.length; i++) {
-    const s = document.createElement("span");
-    s.innerText = text[i];
-    container.appendChild(s);
-    letters.push(s);
+  const s = document.createElement("span");
+  s.innerText = text[i];
+  container.appendChild(s);
+  letters.push(s);
 }
 
 async function runText() {
-    while (true) {
-        for (let i = 0; i < letters.length; i++) {
-            await new Promise(r => setTimeout(r, 120));
-            letters[i].style.opacity = 1;
-        }
-        await new Promise(r => setTimeout(r, 2000));
-        for (let i = letters.length - 1; i >= 0; i--) {
-            await new Promise(r => setTimeout(r, 120));
-            letters[i].style.opacity = 0;
-        }
-        await new Promise(r => setTimeout(r, 800));
-    }
+  while (true) {
+      for (let i = 0; i < letters.length; i++) {
+          await new Promise(r => setTimeout(r, 120));
+          letters[i].style.opacity = 1;
+      }
+      await new Promise(r => setTimeout(r, 2000));
+      for (let i = letters.length - 1; i >= 0; i--) {
+          await new Promise(r => setTimeout(r, 120));
+          letters[i].style.opacity = 0;
+      }
+      await new Promise(r => setTimeout(r, 800));
+  }
 }
 
 // ==============================
@@ -187,42 +393,42 @@ canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
 class Petal {
-    constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height - canvas.height;
-        this.r = Math.random() * 5 + 2;
-        this.sy = Math.random() * 1 + 0.5;
-        this.sx = Math.random() * 0.5 - 0.25;
-        this.alpha = Math.random() * 0.6 + 0.4;
-    }
-    update() {
-        this.y += this.sy;
-        this.x += this.sx;
-        if (this.y > canvas.height) {
-            this.y = -10;
-            this.x = Math.random() * canvas.width;
-        }
-    }
-    draw() {
-        ctx.save();
-        ctx.globalAlpha = this.alpha;
-        ctx.fillStyle = "#ffc0dd";
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-    }
+  constructor() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height - canvas.height;
+      this.r = Math.random() * 5 + 2;
+      this.sy = Math.random() * 1 + 0.5;
+      this.sx = Math.random() * 0.5 - 0.25;
+      this.alpha = Math.random() * 0.6 + 0.4;
+  }
+  update() {
+      this.y += this.sy;
+      this.x += this.sx;
+      if (this.y > canvas.height) {
+          this.y = -10;
+          this.x = Math.random() * canvas.width;
+      }
+  }
+  draw() {
+      ctx.save();
+      ctx.globalAlpha = this.alpha;
+      ctx.fillStyle = "#ffc0dd";
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+  }
 }
 
 const petals = Array.from({ length: 100 }, () => new Petal());
 
 function animateSakura() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    petals.forEach(p => {
-        p.update();
-        p.draw();
-    });
-    requestAnimationFrame(animateSakura);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  petals.forEach(p => {
+      p.update();
+      p.draw();
+  });
+  requestAnimationFrame(animateSakura);
 }
 
 // ==============================
@@ -231,10 +437,11 @@ function animateSakura() {
 renderArticles();
 runText();
 animateSakura();
+initMusicPlayer();
 
 document.getElementById("articleCount").innerText = articles.length;
 
 window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
 });
