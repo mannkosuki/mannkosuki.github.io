@@ -26,6 +26,9 @@ const articles = [
 
     { title: "bitbake实用指南", desc: "bitbake 使用指南",
     path: "./article/article6/index.html", cover: "./images/article/homepageArticlePicture/article6/bitbake.png" },
+
+    { title: "Bitbake 构建流程与变量详解", desc: "bitbake 是如何从bb 文件到编译出包的？",
+    path: "./article/article7/index.html", cover: "./images/article/homepageArticlePicture/article7/bitbake_compile.png" },
   ];
   
   // ==============================
