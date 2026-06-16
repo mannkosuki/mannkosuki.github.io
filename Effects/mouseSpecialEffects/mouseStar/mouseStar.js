@@ -92,6 +92,9 @@
 
     // 右键炸开星星
     window.addEventListener('contextmenu', e => {
+        if (e.target.closest('a') || e.target.closest('.article-card')) {
+            return;
+        }
         e.preventDefault();
         for(let i = 0; i < 16; i++){
             starList.push(new StarParticle(e.clientX, e.clientY));

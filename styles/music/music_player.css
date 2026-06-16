@@ -4,15 +4,17 @@
    .music-player-container {
     position: fixed;
     bottom: 30px;
-    right: 30px;
+    right: max(20px, calc((100vw - 1200px) / 2 + 20px));
+    width: 280px;
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 6px;
     z-index: 1000;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    padding: 8px 16px;
+    padding: 8px 12px;
     border-radius: 30px;
     border: 1px solid rgba(255, 255, 255, 0.2);
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
@@ -26,19 +28,20 @@
 
 /* 统一按钮基础样式 */
 .music-btn {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     border: none;
     background: rgba(255, 255, 255, 0.3);
     color: #333;
-    font-size: 14px;
+    font-size: 13px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s ease;
     outline: none;
+    flex-shrink: 0;
 }
 
 .music-btn:hover {
@@ -52,9 +55,9 @@
 
 /* 播放/暂停按钮稍大 */
 .music-play {
-    width: 42px;
-    height: 42px;
-    font-size: 16px;
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
     background: rgba(255, 255, 255, 0.35);
     color: #333;
 }
@@ -83,21 +86,33 @@
     background: rgba(255, 255, 255, 0.5);
 }
 
+/* 歌名区域：加长，使用CSS变量控制颜色 */
 .music-track-info {
-    max-width: 140px;
+    flex: 1;
+    min-width: 0;
     overflow: hidden;
-    white-space: nowrap;
     margin-left: 4px;
+    cursor: context-menu; /* 提示可右键 */
 }
 
 .track-name {
     font-size: 12px;
-    color: #333;
+    color: var(--track-name-color, #fff); /* 默认白色 */
     display: inline-block;
-    animation: scrollText 8s linear infinite;
+    white-space: nowrap;
 }
 
-@keyframes scrollText {
+/* 滚动动画类 - 无缝循环 */
+.track-name.scroll {
+    animation: scrollLoop 10s linear infinite;
+}
+
+.track-name.scroll .scroll-content {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+@keyframes scrollLoop {
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }
 }
@@ -236,24 +251,26 @@
 }
 
 /* 响应式 */
-@media (max-width: 768px) {
+@media (max-width: 900px) {
     .music-player-container {
+        width: calc(100% - 40px);
+        right: 20px;
+        left: 20px;
         bottom: 15px;
-        right: 15px;
-        padding: 6px 12px;
-        gap: 6px;
     }
+}
 
+@media (max-width: 768px) {
     .music-btn {
-        width: 32px;
-        height: 32px;
-        font-size: 12px;
+        width: 30px;
+        height: 30px;
+        font-size: 11px;
     }
 
     .music-play {
-        width: 38px;
-        height: 38px;
-        font-size: 14px;
+        width: 36px;
+        height: 36px;
+        font-size: 13px;
     }
 
     .music-track-info {

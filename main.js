@@ -254,8 +254,25 @@ function initMusicPlayer() {
 
   const trackInfo = document.createElement("div");
   trackInfo.className = "music-track-info";
-  trackInfo.innerHTML = `<span class="track-name">${musics[currentTrackIndex].name}</span>`;
+  trackInfo.id = "trackInfo";
+  trackInfo.innerHTML = `<span class="track-name" id="trackName">${musics[currentTrackIndex].name}</span>`;
   playerContainer.appendChild(trackInfo);
+
+  // 加载保存的颜色
+  const savedColor = localStorage.getItem("trackNameColor");
+  if (savedColor) {
+    document.documentElement.style.setProperty("--track-name-color", savedColor);
+  } else {
+    // 没有保存过，默认白色
+    document.documentElement.style.setProperty("--track-name-color", "#ffffff");
+  }
+
+  // 右键菜单：颜色选择
+  trackInfo.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    showColorPicker(e.clientX, e.clientY);
+  });
 
   // ==============================
   // 播放列表弹窗（带搜索）
@@ -265,13 +282,11 @@ function initMusicPlayer() {
   playlistPopup.id = "playlistPopup";
   playlistPopup.style.display = "none";
 
-  // 头部
   const header = document.createElement("div");
   header.className = "playlist-header";
   header.innerText = "播放列表";
   playlistPopup.appendChild(header);
 
-  // 搜索框
   const searchBox = document.createElement("div");
   searchBox.className = "playlist-search-box";
   const searchInput = document.createElement("input");
@@ -281,7 +296,6 @@ function initMusicPlayer() {
   searchBox.appendChild(searchInput);
   playlistPopup.appendChild(searchBox);
 
-  // 列表容器
   const listContainer = document.createElement("div");
   listContainer.className = "playlist-items";
   listContainer.id = "playlistItems";
@@ -289,15 +303,12 @@ function initMusicPlayer() {
 
   playerContainer.appendChild(playlistPopup);
 
-  // 初始渲染列表
   renderPlaylistItems();
 
-  // 搜索事件
   searchInput.addEventListener("input", (e) => {
     renderPlaylistItems(e.target.value);
   });
 
-  // 列表点击事件
   listContainer.addEventListener("click", (e) => {
       const item = e.target.closest(".playlist-item");
       if (item) {
@@ -307,7 +318,6 @@ function initMusicPlayer() {
       }
   });
 
-  // 点击外部关闭弹窗
   document.addEventListener("click", (e) => {
     const popup = document.getElementById("playlistPopup");
     const listButton = document.querySelector(".music-list");
@@ -317,6 +327,79 @@ function initMusicPlayer() {
       }
     }
   });
+
+  // ==============================
+  // 颜色选择器弹窗
+  // ==============================
+  const colorPickerPopup = document.createElement("div");
+  colorPickerPopup.id = "colorPickerPopup";
+  colorPickerPopup.style.cssText = `
+    position: fixed;
+    display: none;
+    z-index: 10000;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    gap: 8px;
+    flex-direction: column;
+    align-items: center;
+  `;
+
+  colorPickerPopup.innerHTML = `
+    <div style="font-size: 13px; color: #333; font-weight: 600; margin-bottom: 4px;">歌名颜色</div>
+    <input type="color" id="colorPickerInput" value="${localStorage.getItem("trackNameColor") || "#ffffff"}">
+    <div style="display: flex; gap: 6px; margin-top: 4px;">
+      <button id="colorPickerReset" style="padding: 4px 12px; border: none; border-radius: 6px; background: #f0f0f0; color: #666; font-size: 12px; cursor: pointer;">重置</button>
+      <button id="colorPickerClose" style="padding: 4px 12px; border: none; border-radius: 6px; background: #409eff; color: white; font-size: 12px; cursor: pointer;">确认</button>
+    </div>
+  `;
+
+  document.body.appendChild(colorPickerPopup);
+
+  const colorInput = document.getElementById("colorPickerInput");
+  const colorReset = document.getElementById("colorPickerReset");
+  const colorClose = document.getElementById("colorPickerClose");
+
+  colorInput.addEventListener("input", (e) => {
+    const color = e.target.value;
+    document.documentElement.style.setProperty("--track-name-color", color);
+  });
+
+  colorInput.addEventListener("change", (e) => {
+    localStorage.setItem("trackNameColor", e.target.value);
+  });
+
+  colorReset.addEventListener("click", () => {
+    const defaultColor = "#ffffff"; // 重置为白色
+    colorInput.value = defaultColor;
+    document.documentElement.style.setProperty("--track-name-color", defaultColor);
+    localStorage.removeItem("trackNameColor");
+  });
+
+  colorClose.addEventListener("click", () => {
+    colorPickerPopup.style.display = "none";
+  });
+
+  document.addEventListener("click", (e) => {
+    const popup = document.getElementById("colorPickerPopup");
+    if (popup && popup.style.display === "flex") {
+      if (!popup.contains(e.target) && e.target !== trackInfo && !trackInfo.contains(e.target)) {
+        popup.style.display = "none";
+      }
+    }
+  });
+
+  function showColorPicker(x, y) {
+    const popup = document.getElementById("colorPickerPopup");
+    popup.style.display = "flex";
+    const finalX = Math.min(x, window.innerWidth - 160);
+    const finalY = Math.min(y, window.innerHeight - 120);
+    popup.style.left = finalX + "px";
+    popup.style.top = finalY + "px";
+  }
 
   musicControl.style.display = "none";
 
@@ -459,10 +542,26 @@ function updatePlayButton() {
 }
 
 function updateTrackInfo() {
-  const trackInfo = document.querySelector(".music-track-info .track-name");
-  if (trackInfo) {
-      trackInfo.innerText = musics[currentTrackIndex].name;
-  }
+  const trackInfo = document.querySelector(".music-track-info");
+  const trackName = document.querySelector(".music-track-info .track-name");
+  if (!trackInfo || !trackName) return;
+
+  const name = musics[currentTrackIndex].name;
+
+  // 先重置为纯文本，移除 scroll 类
+  trackName.classList.remove("scroll");
+  trackName.innerText = name;
+
+  // 测量原始宽度
+  requestAnimationFrame(() => {
+    const isOverflow = trackName.scrollWidth > trackInfo.clientWidth;
+
+    if (isOverflow) {
+      // 溢出：复制文本实现无缝循环滚动
+      trackName.innerHTML = `<span class="scroll-content">${name}&nbsp;&nbsp;&nbsp;&nbsp;${name}</span>`;
+      trackName.classList.add("scroll");
+    }
+  });
 }
 
 function updatePlaylistUI() {
