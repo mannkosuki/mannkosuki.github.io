@@ -28,9 +28,18 @@ const articles = [
 ];
 
 // ==============================
+// 排序状态
+// ==============================
+let sortOrder = "new-to-old"; // "new-to-old" | "old-to-new"
+
+function getSortedArticles() {
+  return sortOrder === "new-to-old" ? [...articles].reverse() : [...articles];
+}
+
+// ==============================
 // 分页配置
 // ==============================
-const PAGE_SIZE = 10; // 每页10篇
+const PAGE_SIZE = 10;
 let currentPage = 1;
 
 // ==============================
@@ -41,14 +50,13 @@ function renderArticles() {
   const pagination = document.getElementById("pagination");
   list.innerHTML = "";
 
-  // 计算分页
-  const total = articles.length;
+  const sortedArticles = getSortedArticles();
+  const total = sortedArticles.length;
   const totalPage = Math.ceil(total / PAGE_SIZE);
   const start = (currentPage - 1) * PAGE_SIZE;
   const end = start + PAGE_SIZE;
-  const pageData = articles.slice(start, end);
+  const pageData = sortedArticles.slice(start, end);
 
-  // 渲染文章
   pageData.forEach((art, index) => {
       const globalIndex = (currentPage - 1) * PAGE_SIZE + index;
       const isRight = globalIndex % 2 === 1;
@@ -63,7 +71,6 @@ function renderArticles() {
       </a>`;
   });
 
-  // 渲染分页按钮
   renderPagination(totalPage);
 }
 
@@ -76,13 +83,11 @@ function renderPagination(totalPage) {
 
   if (totalPage <= 1) return;
 
-  // 首页
   const first = createBtn("首页", currentPage === 1, () => {
     currentPage = 1;
     renderArticles();
   });
 
-  // 上一页
   const prev = createBtn("上一页", currentPage === 1, () => {
     currentPage--;
     renderArticles();
@@ -91,7 +96,6 @@ function renderPagination(totalPage) {
   el.appendChild(first);
   el.appendChild(prev);
 
-  // 数字页
   for (let i = 1; i <= totalPage; i++) {
     const num = createBtn(i, false, () => {
       currentPage = i;
@@ -101,13 +105,11 @@ function renderPagination(totalPage) {
     el.appendChild(num);
   }
 
-  // 下一页
   const next = createBtn("下一页", currentPage === totalPage, () => {
     currentPage++;
     renderArticles();
   });
 
-  // 尾页
   const last = createBtn("尾页", currentPage === totalPage, () => {
     currentPage = totalPage;
     renderArticles();
@@ -117,13 +119,67 @@ function renderPagination(totalPage) {
   el.appendChild(last);
 }
 
-// 按钮生成工具
 function createBtn(text, disabled, click) {
   const btn = document.createElement("button");
   btn.innerText = text;
   btn.disabled = disabled;
   btn.onclick = click;
   return btn;
+}
+
+// ==============================
+// 排序切换按钮
+// ==============================
+function initSortToggle() {
+  const articleSection = document.querySelector(".article-section");
+  if (!articleSection) return;
+
+  const h2 = articleSection.querySelector("h2");
+  if (h2) {
+    h2.innerHTML = "文章列表";
+    h2.style.cssText = `
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 1.8rem;
+      margin-bottom: 30px;
+      padding-left: 15px;
+      border-left: 4px solid #409eff;
+      color: #ffffff !important;
+    `;
+  }
+
+  const sortBtn = document.createElement("span");
+  sortBtn.id = "sortBtn";
+  sortBtn.style.cssText = `
+    font-size: 14px;
+    font-weight: normal;
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    user-select: none;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  `;
+
+  const arrowIcon = sortOrder === "new-to-old" ? "↓" : "↑";
+  sortBtn.innerHTML = `排序 ${arrowIcon}`;
+
+  sortBtn.onmouseenter = () => sortBtn.style.color = "rgba(255, 255, 255, 0.9)";
+  sortBtn.onmouseleave = () => sortBtn.style.color = "rgba(255, 255, 255, 0.6)";
+
+  sortBtn.addEventListener("click", () => {
+    sortOrder = sortOrder === "new-to-old" ? "old-to-new" : "new-to-old";
+    const newArrow = sortOrder === "new-to-old" ? "↓" : "↑";
+    sortBtn.innerHTML = `排序 ${newArrow}`;
+    currentPage = 1;
+    renderArticles();
+  });
+
+  if (h2) {
+    h2.appendChild(sortBtn);
+  }
 }
 
 // ==============================
@@ -137,20 +193,17 @@ const musics = [
 
 const bgm = document.getElementById("bgm");
 let currentTrackIndex = 0;
-let playMode = "order"; // "order" | "loop" | "random"
+let playMode = "order";
 let isFirstPlay = true;
 
-// 初始化播放器UI
 function initMusicPlayer() {
   const musicControl = document.querySelector(".music-control");
   if (!musicControl) return;
 
-  // 创建播放器容器
   const playerContainer = document.createElement("div");
   playerContainer.className = "music-player-container";
   musicControl.parentNode.insertBefore(playerContainer, musicControl);
 
-  // 上一首按钮
   const prevBtn = document.createElement("button");
   prevBtn.className = "music-btn music-prev";
   prevBtn.innerHTML = "⏮";
@@ -158,7 +211,6 @@ function initMusicPlayer() {
   prevBtn.onclick = playPrev;
   playerContainer.appendChild(prevBtn);
 
-  // 播放/暂停按钮（替换原来的音乐按钮）
   const playBtn = document.createElement("button");
   playBtn.className = "music-btn music-play";
   playBtn.innerHTML = "▶";
@@ -166,7 +218,6 @@ function initMusicPlayer() {
   playBtn.onclick = toggleMusic;
   playerContainer.appendChild(playBtn);
 
-  // 下一首按钮
   const nextBtn = document.createElement("button");
   nextBtn.className = "music-btn music-next";
   nextBtn.innerHTML = "⏭";
@@ -174,7 +225,6 @@ function initMusicPlayer() {
   nextBtn.onclick = playNext;
   playerContainer.appendChild(nextBtn);
 
-  // 模式切换按钮
   const modeBtn = document.createElement("button");
   modeBtn.className = "music-btn music-mode";
   modeBtn.innerHTML = getModeIcon(playMode);
@@ -186,7 +236,6 @@ function initMusicPlayer() {
   };
   playerContainer.appendChild(modeBtn);
 
-  // 播放列表按钮
   const listBtn = document.createElement("button");
   listBtn.className = "music-btn music-list";
   listBtn.innerHTML = "☰";
@@ -194,13 +243,11 @@ function initMusicPlayer() {
   listBtn.onclick = togglePlaylist;
   playerContainer.appendChild(listBtn);
 
-  // 当前曲目显示
   const trackInfo = document.createElement("div");
   trackInfo.className = "music-track-info";
   trackInfo.innerHTML = `<span class="track-name">${musics[currentTrackIndex].name}</span>`;
   playerContainer.appendChild(trackInfo);
 
-  // 播放列表弹窗
   const playlistPopup = document.createElement("div");
   playlistPopup.className = "music-playlist-popup";
   playlistPopup.id = "playlistPopup";
@@ -218,7 +265,6 @@ function initMusicPlayer() {
   playlistPopup.innerHTML = playlistHtml;
   playerContainer.appendChild(playlistPopup);
 
-  // 播放列表点击事件
   playlistPopup.addEventListener("click", (e) => {
       const item = e.target.closest(".playlist-item");
       if (item) {
@@ -228,25 +274,15 @@ function initMusicPlayer() {
       }
   });
 
-  // 隐藏原来的音乐按钮
   musicControl.style.display = "none";
 
-  // 绑定 ended 事件
   bgm.addEventListener("ended", onTrackEnded);
   bgm.addEventListener("play", updatePlayButton);
   bgm.addEventListener("pause", updatePlayButton);
 }
 
-// function getModeIcon(mode) {
-//   switch(mode) {
-//       case "loop": return "🔂";
-//       case "random": return "🔀";
-//       default: return "🔁";
-//   }
-// }
-
 function getModeIcon(mode) {
-  const color = "#555"; // 统一灰色
+  const color = "#555";
   switch(mode) {
       case "loop":
           return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>`;
@@ -435,6 +471,7 @@ function animateSakura() {
 // 启动
 // ==============================
 renderArticles();
+initSortToggle();
 runText();
 animateSakura();
 initMusicPlayer();
