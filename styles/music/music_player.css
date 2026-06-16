@@ -63,7 +63,7 @@
     background: rgba(255, 255, 255, 0.55);
 }
 
-/* 模式选择按钮 - 与上一首下一首完全一致 */
+/* 模式选择按钮 */
 .music-mode {
     background: rgba(255, 255, 255, 0.3);
     color: #333;
@@ -102,13 +102,15 @@
     100% { transform: translateX(-50%); }
 }
 
-/* 播放列表弹窗 */
+/* ==============================
+   播放列表弹窗
+   ============================== */
 .music-playlist-popup {
     position: absolute;
     bottom: 55px;
     right: 0;
-    width: 220px;
-    max-height: 300px;
+    width: 240px;
+    max-height: 360px;
     background: rgba(255, 255, 255, 0.95);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
@@ -117,6 +119,7 @@
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
     overflow: hidden;
     z-index: 1001;
+    display: none;
 }
 
 .playlist-header {
@@ -127,6 +130,38 @@
     border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
+/* ==============================
+   搜索框样式
+   ============================== */
+.playlist-search-box {
+    padding: 8px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.playlist-search-box input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    font-size: 13px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.8);
+    color: #333;
+    transition: border-color 0.2s;
+}
+
+.playlist-search-box input:focus {
+    border-color: rgba(64, 158, 255, 0.5);
+    background: rgba(255, 255, 255, 1);
+}
+
+.playlist-search-box input::placeholder {
+    color: #aaa;
+}
+
+/* ==============================
+   列表区域
+   ============================== */
 .playlist-items {
     max-height: 250px;
     overflow-y: auto;
@@ -171,6 +206,14 @@
     color: #409eff;
     width: 20px;
     text-align: center;
+}
+
+/* 无搜索结果提示 */
+.playlist-empty {
+    padding: 20px;
+    text-align: center;
+    color: #999;
+    font-size: 13px;
 }
 
 /* 隐藏原来的音乐按钮 */
@@ -218,7 +261,7 @@
     }
 
     .music-playlist-popup {
-        width: 180px;
+        width: 200px;
         right: -10px;
     }
 }

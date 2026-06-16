@@ -30,7 +30,7 @@ const articles = [
 // ==============================
 // 排序状态
 // ==============================
-let sortOrder = "new-to-old"; // "new-to-old" | "old-to-new"
+let sortOrder = "new-to-old";
 
 function getSortedArticles() {
   return sortOrder === "new-to-old" ? [...articles].reverse() : [...articles];
@@ -186,9 +186,18 @@ function initSortToggle() {
 // 音乐播放器
 // ==============================
 const musics = [
-  { name: "なんでもないや", path: "./music/nanndemonaiya.mp3" },
-  { name: "ヤキモチ", path: "./music/yakimochi.mp3" },
+  { name: "化物語", path: "./music/bakemonogatari.mp3" },
+  { name: "freelucky", path: "./music/freelucky.mp3" },
   { name: "打上花火", path: "./music/hanabiwouchiageru.mp3" },
+  { name: "hisTheme", path: "./music/hisTheme.mp3" },
+  { name: "無くした日々にさよなら", path: "./music/nakusitahibinisayonara.mp3" },
+  { name: "なんでもないや", path: "./music/nanndemonaiya.mp3" },
+  { name: "rain", path: "./music/rain.mp3" },
+  { name: "Ref_rain", path: "./music/Ref_rain.mp3" },
+  { name: "summer", path: "./music/summer.mp3" },
+  { name: "ヤキモチ", path: "./music/yakimochi.mp3" },
+  { name: "ヨスガノソラ メインテーマ", path: "./music/yosuganosora.mp3" },
+  { name: "指纹", path: "./music/zhiwen.mp3" },
 ];
 
 const bgm = document.getElementById("bgm");
@@ -248,30 +257,65 @@ function initMusicPlayer() {
   trackInfo.innerHTML = `<span class="track-name">${musics[currentTrackIndex].name}</span>`;
   playerContainer.appendChild(trackInfo);
 
+  // ==============================
+  // 播放列表弹窗（带搜索）
+  // ==============================
   const playlistPopup = document.createElement("div");
   playlistPopup.className = "music-playlist-popup";
   playlistPopup.id = "playlistPopup";
   playlistPopup.style.display = "none";
 
-  let playlistHtml = '<div class="playlist-header">播放列表</div><div class="playlist-items">';
-  musics.forEach((m, i) => {
-      playlistHtml += `<div class="playlist-item ${i === currentTrackIndex ? 'active' : ''}" data-index="${i}">
-          <span class="item-index">${i + 1}</span>
-          <span class="item-name">${m.name}</span>
-          <span class="item-status">${i === currentTrackIndex ? '▶' : ''}</span>
-      </div>`;
-  });
-  playlistHtml += '</div>';
-  playlistPopup.innerHTML = playlistHtml;
+  // 头部
+  const header = document.createElement("div");
+  header.className = "playlist-header";
+  header.innerText = "播放列表";
+  playlistPopup.appendChild(header);
+
+  // 搜索框
+  const searchBox = document.createElement("div");
+  searchBox.className = "playlist-search-box";
+  const searchInput = document.createElement("input");
+  searchInput.type = "text";
+  searchInput.id = "playlistSearch";
+  searchInput.placeholder = "搜索歌曲...";
+  searchBox.appendChild(searchInput);
+  playlistPopup.appendChild(searchBox);
+
+  // 列表容器
+  const listContainer = document.createElement("div");
+  listContainer.className = "playlist-items";
+  listContainer.id = "playlistItems";
+  playlistPopup.appendChild(listContainer);
+
   playerContainer.appendChild(playlistPopup);
 
-  playlistPopup.addEventListener("click", (e) => {
+  // 初始渲染列表
+  renderPlaylistItems();
+
+  // 搜索事件
+  searchInput.addEventListener("input", (e) => {
+    renderPlaylistItems(e.target.value);
+  });
+
+  // 列表点击事件
+  listContainer.addEventListener("click", (e) => {
       const item = e.target.closest(".playlist-item");
       if (item) {
           const idx = parseInt(item.dataset.index);
           playTrack(idx);
           togglePlaylist();
       }
+  });
+
+  // 点击外部关闭弹窗
+  document.addEventListener("click", (e) => {
+    const popup = document.getElementById("playlistPopup");
+    const listButton = document.querySelector(".music-list");
+    if (popup && popup.style.display === "block") {
+      if (!popup.contains(e.target) && e.target !== listButton && !listButton.contains(e.target)) {
+        popup.style.display = "none";
+      }
+    }
   });
 
   musicControl.style.display = "none";
@@ -281,15 +325,61 @@ function initMusicPlayer() {
   bgm.addEventListener("pause", updatePlayButton);
 }
 
+// ==============================
+// 渲染播放列表（支持搜索过滤）
+// ==============================
+function renderPlaylistItems(filter = "") {
+  const listContainer = document.getElementById("playlistItems");
+  if (!listContainer) return;
+
+  const filterLower = filter.toLowerCase().trim();
+  const filtered = musics.map((m, i) => ({ ...m, index: i }))
+                        .filter(m => m.name.toLowerCase().includes(filterLower));
+
+  let html = "";
+  if (filtered.length === 0) {
+    html = '<div class="playlist-empty">无匹配歌曲</div>';
+  } else {
+    filtered.forEach((m) => {
+      html += `<div class="playlist-item ${m.index === currentTrackIndex ? 'active' : ''}" data-index="${m.index}">
+          <span class="item-index">${m.index + 1}</span>
+          <span class="item-name">${m.name}</span>
+          <span class="item-status">${m.index === currentTrackIndex ? '▶' : ''}</span>
+      </div>`;
+    });
+  }
+  listContainer.innerHTML = html;
+}
+
+// ==============================
+// 模式图标
+// ==============================
 function getModeIcon(mode) {
   const color = "#555";
   switch(mode) {
-      case "loop":
-          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>`;
-      case "random":
-          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l5 5"/><path d="M4 4l5 5"/></svg>`;
-      default:
-          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2.1l4 4-4 4"/><path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8M7 21.9l-4-4 4-4"/><path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/></svg>`;
+      case "loop": 
+          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 2.1l4 4-4 4"/>
+            <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8"/>
+            <path d="M7 21.9l-4-4 4-4"/>
+            <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/>
+            <text x="12" y="14" text-anchor="middle" fill="${color}" stroke="none" font-size="8" font-weight="bold">1</text>
+          </svg>`;
+      case "random": 
+          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 3h5v5"/>
+            <path d="M4 20L21 3"/>
+            <path d="M21 16v5h-5"/>
+            <path d="M15 15l5 5"/>
+            <path d="M4 4l5 5"/>
+          </svg>`;
+      default: 
+          return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 2.1l4 4-4 4"/>
+            <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8"/>
+            <path d="M7 21.9l-4-4 4-4"/>
+            <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"/>
+          </svg>`;
   }
 }
 
@@ -376,12 +466,8 @@ function updateTrackInfo() {
 }
 
 function updatePlaylistUI() {
-  const items = document.querySelectorAll(".playlist-item");
-  items.forEach((item, i) => {
-      item.classList.toggle("active", i === currentTrackIndex);
-      const status = item.querySelector(".item-status");
-      if (status) status.innerText = i === currentTrackIndex ? "▶" : "";
-  });
+  const searchInput = document.getElementById("playlistSearch");
+  renderPlaylistItems(searchInput ? searchInput.value : "");
 }
 
 function togglePlaylist() {
