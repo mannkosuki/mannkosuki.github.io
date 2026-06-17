@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMC基础知识介绍 - 不动声色的小站</title>
+    <!-- 看板娘样式 -->
+    <link rel="stylesheet" type="text/css" href="../../kanbanJS/new/live2d_demo/assets/waifu.css"/>
+    <!-- 通用文章样式 -->
+    <link rel="stylesheet" href="../../styles/article/article.css">
+<base target="_blank">
+</head>
+
+<!-- 看板娘脚本 -->
+<script src="../../libJs/jquery.min.js"></script>
+<script src="../../kanbanJS/new/live2d_demo/assets/autoload.js"></script>
+
+<body>
+    <!-- 看板娘 -->
+    <div class="waifu">
+        <div class="waifu-tips"></div>
+        <canvas id="live2d" class="live2d"></canvas>
+        <div class="waifu-tool">
+            <span class="fui-home"></span>
+            <span class="fui-chat"></span>
+            <span class="fui-eye"></span>
+            <span class="fui-user"></span>
+            <span class="fui-photo"></span>
+            <span class="fui-info-circle"></span>
+            <span class="fui-cross"></span>
+        </div>
+    </div>
+
+    <!-- 文章头部 -->
+    <header class="article-header">
+        <div class="header-bg-img" style="background-image: url('https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=1200');"></div>
+        <div class="header-overlay"></div>
+        <div class="header-content">
+            <h1 class="article-title">BMC基础知识介绍</h1>
+            <div class="article-meta">
+                <span>发表于 2024-06-17</span>
+                <span class="separator">|</span>
+                <span>更新于 2026-06-17</span>
+                <span class="separator">|</span>
+                <span>字数总计: 5.8k</span>
+                <span class="separator">|</span>
+                <span>阅读时长: 20分钟</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 文章正文 -->
+    <div class="article-container">
+      <h1>一、BMC概念</h1>
+        <ul>
+            <li>BMC（Baseboard Management Controller），就AST2500而言，是第六代服务器管理处理器，是一个ARM架构的处理器，遵循IPMI规范。</li>
+            <li>BMC是服务器底层的应用系统，它和服务器系统是相互独立的，是整个服务器大管家。从服务器上电时刻，它的所有部件都是归BMC来监控。当服务器插上AC电源线，BMC芯片即上电复位，它自身的firmware开始启动运行，此时有可能服务器的OS还没有安装或者已安装但还未开始启动。重启BMC只会让管理模块暂时不可用，服务器本身的业务运行是正常的。</li>
+        </ul>
+
+        <h1>二、BMC系统框图</h1>
+        <p>以ASPEED的AST2500为例，主要用于侦测服务器各个部件（CPU、内存、硬盘、风扇、机框等）的温度、电压等健康状态，同时根据各个温度采集点实时调整风扇转速保证服务器不产生过温、而且控制总体功耗又不能过高，如果单板部件出现任何异常，通过IPMI协议将信息及时上报给上层运维工程师，以便运维工程师及时处理，保证服务器安全运行及相关业务无损。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660793350197-d4605e56-2b73-432a-ba28-16054df0cc05.png" alt="AST2500系统框图">
+        <p class="img-caption">AST2500 系统框图 — 展示各接口与模块连接关系</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660793379091-c4a5676c-38cb-4770-a5c4-d201f0ecf6a5.png" alt="PIN GROUP LIST">
+        <p class="img-caption">AST2500 PIN GROUP LIST — 各接口引脚分配</p>
+
+        <h1>三、BMC功能模块介绍</h1>
+
+        <h2>1. 监控管理功能</h2>
+        <p>BMC 主要的功能就是对系统进行监测和控制，所有这些信息都是动态的，主要通过主板上的传感器收集信息，BMC 的传感器服务程序以一定的时间间隔不停的扫描所有的传感器，然后存储在系统共享的一块区域，供其它模块使用。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660794098445-ba4d5718-a17d-4f3c-972a-77b7b90cd4a0.png" alt="监控接口功能表">
+        <p class="img-caption">监控接口功能表 — ADC/PWM/I2C/GPIO 对应功能</p>
+
+        <h2>2. ADC电压检测功能</h2>
+        <p>BMC内部集成16个ADC模块，主要通过外部电阻分压来检测主要电源电压状况是否发生异常。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660801961925-b7b53e34-93a2-43fc-af29-a7101b33077a.png" alt="ADC引脚分配">
+        <p class="img-caption">ADC 引脚分配图 — 各电压检测点对应关系</p>
+
+        <h2>3. I2C温度监测功能</h2>
+        <p>BMC会用一组I2C用于连接外部thermal sensor，用于侦测关键位置温度变化来控制风扇转速和控制系统做相应的动作。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660802033359-908e227f-9068-45ce-8b59-8687c29ccf79.png" alt="TMP75温度传感器电路">
+        <p class="img-caption">TMP75 温度传感器电路 — I2C 总线连接示意</p>
+
+        <h2>4. FAN控制和监测功能</h2>
+        <p>BMC内置8个PWM用于风扇转速控制和16个TACH接口用于转速检测，同时这些接口也可以复用为普通的GPIO接口。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660802325411-0a2ab81f-2094-4400-8dc6-709fc250b3a3.png" alt="FAN接口连接">
+        <p class="img-caption">FAN 接口连接示意</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660802333384-30d9b3a8-9a3c-47db-b18b-87c9698766df.png" alt="FAN PWM控制电路">
+        <p class="img-caption">FAN PWM 控制电路 — 包含MOS管驱动</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660802350254-b7676e0e-0d61-4e71-9a7a-6af231637c3f.png" alt="FAN TACH检测电路">
+        <p class="img-caption">FAN TACH 检测电路 — 转速反馈信号处理</p>
+
+        <h2>5. 远程WEB监控以及KVM功能</h2>
+        <p>WEB通过BMC 网络接口间接的访问传感器模组提供的传感器信息，可以读出现在的实际读值。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660807143140-4a7f38c9-a585-4139-9282-b77e8d83418c.png" alt="BMC Web登录界面">
+        <p class="img-caption">BMC Web 登录界面</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660807154624-0df54f63-0103-4bcf-ab09-5f00652b1692.png" alt="BMC Web主监控界面">
+        <p class="img-caption">BMC Web 主监控界面 — 传感器数据与网络信息</p>
+
+        <h2>6. 开关机监测以及控制功能</h2>
+        <p>开关机控制服务程序实时监控用户的输入，得到正确的命令后，通过与CPLD的GPIO控制系统开机/关机/重启；此外还包含UID监测和控制功能，机箱拆机记录功能。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660807246839-2a3b92c4-59c4-4d7c-9770-ebc5108e55b9.png" alt="电源控制界面">
+        <p class="img-caption">电源控制界面 — 开关机状态与操作</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660807254825-eee4c432-2c57-445b-bf01-0e68f34d9274.png" alt="开关机控制GPIO电路">
+        <p class="img-caption">开关机控制 GPIO 电路 — 包含 PWRBTN、RSTBTN、UID 等信号</p>
+
+        <h2>7. SOL（Serial over Lan）功能</h2>
+        <p>SOL（Serial over Lan）主要的功能是实现远程串口，把服务器的串口信息通过网络传递到远端。使用户不用本地的显示就可以查看与监控服务器的系统运行状态，进行运维，此功能同KVM功能相似，只是KVM处理的是视频信号。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660807522599-a79cfc8c-525a-4a66-ba2a-36c5a31be9f9.png" alt="SOL串口连接示意">
+        <p class="img-caption">SOL 串口连接示意 — UART 交叉连接</p>
+
+        <p>系统的串口输入到 BMC 的 UART1，需要满足 Tx 与 Rx 交叉的要求，这样 BMC 就可以从 UART 接收服务器的信息。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660807728541-ff0c69bb-6f5d-438c-9b22-ee5e4b8269d4.png" alt="SOL远程登录界面">
+        <p class="img-caption">SOL 远程登录界面 — 通过 Java 客户端连接</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660807737657-aeacd405-7e80-4f06-8c13-b35d740b1a80.png" alt="SOL连接配置">
+        <p class="img-caption">SOL 连接配置 — IP、用户名、波特率设置</p>
+
+        <h2>8. 固件Update功能（BIOS, CPLD, BMC）</h2>
+
+        <h3>8.1 System BIOS Update</h3>
+        <p><strong>方式1：</strong>BMC通过控制外部MUX去切换BMC和系统对BIOS的控制权，然后去更新BIOS。使用的是SPI总线。</p>
+        <p><strong>方式2：</strong>BMC通过"system SPI"去切换BMC和系统对BIOS ROM的控制权，然后更新BIOS。使用的是SPI总线。</p>
+        <p><strong>方式3：</strong>通过LPC去更新，使用的是LPC或eSPI总线。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660808869328-1c6207df-3669-415a-8ad7-7846d5c50a84.png" alt="BIOS更新方式框图">
+        <p class="img-caption">BIOS 更新方式框图 — 三种更新路径对比</p>
+
+        <h3>8.2 CPLD Firmware Update</h3>
+        <p>BMC透过LPC或者JTAG去更新CPLD Firmware，一般开发时会预留JTAG接口通过一个switch去切换控制权。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809001849-522d8d31-83ff-40eb-9235-9792ea757849.png" alt="CPLD JTAG电路">
+        <p class="img-caption">CPLD JTAG 电路 — 通过 MUX 切换控制权</p>
+
+        <h3>8.3 BMC Firmware Update</h3>
+        <p><strong>方式一：</strong>通过PCIE总线；</p>
+        <p><strong>方式二：</strong>通过LPC总线；</p>
+        <p><strong>方式三：</strong>通过串口；</p>
+        <p><strong>方式四：</strong>通过LAN；</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809228684-a742ef7e-786c-46f2-be04-1e48fbf69146.png" alt="BMC固件更新Web界面">
+        <p class="img-caption">BMC 固件更新 Web 界面 — HTTP/HTTPS 上传</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809242710-466ad65b-963c-450b-be99-0e83ae24ff43.png" alt="固件更新方式说明">
+        <p class="img-caption">固件更新方式说明 — PCIe / LPC / UART / LAN 四种途径</p>
+
+        <h2>9. FRU（Failure Replace Unit）信息读取</h2>
+        <p>FRU EEPROM：BMC透过I2C去访问EEPROM的内容信息。</p>
+        <p>FRU里面主要存放内容：</p>
+        <ul>
+            <li>主板信息，包括厂商，生产日期、固件版本等信息。</li>
+            <li>还可以存放BMC的MAC1/MAC2的MAC ADDRESS。</li>
+        </ul>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809330376-50a4fa6e-1699-43e1-be80-8567c4e2bda2.png" alt="FRU信息界面">
+        <p class="img-caption">FRU 信息界面 — 机柜与主板详细信息</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809339538-d68128a7-4bd9-4857-9dda-4ecfd9a9f4b0.png" alt="FRU EEPROM电路">
+        <p class="img-caption">FRU EEPROM 电路 — I2C 总线连接（地址 0xA2）</p>
+
+        <h2>10. 显示功能</h2>
+        <p>系统的显示一般是通过PCIE总线透过BMC来显示。</p>
+        <p>开发时一般会设计一个前面板显示和一个后置面板显示，通过VGA SWITCH去切换。</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809426135-8e89f3fb-c674-4fe0-acf7-232170b1a726.png" alt="VGA MUX电路">
+        <p class="img-caption">VGA MUX 电路 — 前后置面板切换（TS3V713EL / PI3V713 方案）</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809440266-96e041f2-3446-4e57-b6b6-c02fbefffe29.png" alt="VGA切换控制">
+        <p class="img-caption">VGA 切换控制 — SEL 信号选择前后置输出</p>
+
+        <h2>11. 系统日志备份模块</h2>
+        <p>为了便于系统出现故障时能够及时地侦测错误，开发了记录系统日志的模组。在BMC中需要不停地记录系统串口的输出信息，而在系统切换到SOL时，我们备份SOL的串口信息。对于信息我们临时的保存在内存中，便于上层的查询。用户通过WEB或者开发的专用工具查询系统日志。</p>
+
+        <p>BMC 的固件在设计的时候，对错误信息进行分级处理：</p>
+        <ul>
+            <li><strong>一般信息：</strong>普通输出，供调试或者跟踪使用，可以关闭。</li>
+            <li><strong>警告信息：</strong>系统出现异常，但可以修复，不影响使用。</li>
+            <li><strong>紧急信息：</strong>系统可能遇到灾难性的问题，需要紧急处理。</li>
+        </ul>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809587826-47a1f8c1-bb3c-47c1-b824-5378e1624f35.png" alt="事件日志界面">
+        <p class="img-caption">事件日志界面 — 传感器事件查询与过滤</p>
+
+        <h2>12. 管理网口功能</h2>
+        <p>BMC中集成了两个MAC，一般情况下一个用作Dedicate LAN，一个用作Share LAN。</p>
+        <ul>
+            <li><strong>Dedicate LAN：</strong>顾名思义就是专门的管理口，一般主板板载有即2/4个业务网口和1个BMC管理口，这个BMC的管理口就是dedicate LAN。</li>
+            <li><strong>Share LAN：</strong>简单理解就是可以共享的网口，设置好share LAN后，网线连接主板板载的业务网口，输入share LAN的IP也可以访问BMC管理界面。</li>
+        </ul>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809707845-1fc643dd-7b10-47ad-80c7-07efe5c62023.png" alt="网口电路">
+        <p class="img-caption">网口电路 — RGMII 接口与 PHY 连接</p>
+
+        <h2>13. BMC RESET#功能</h2>
+        <p>一般开发时会设计两种方式去Reset BMC，一种是通过硬件，一种是通过软件：</p>
+        <ul>
+            <li><strong>硬件方式：</strong>外部BTN控制，比如长按UID 4秒；</li>
+            <li><strong>软件方式：</strong>CPLD或者WDT去trigger，比如BMC hang机时外部触发。</li>
+        </ul>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809838510-09d05cfd-25bd-4f51-97a1-79a86da30050.png" alt="BMC Reset引脚说明">
+        <p class="img-caption">BMC Reset 引脚说明 — SRST# 与 EXTRST# 功能差异</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809853524-ae7ee303-25b8-4a84-a3c0-2a4ddd46cf03.png" alt="BMC SRST电路">
+        <p class="img-caption">BMC SRST 电路 — 电源就绪信号与复位逻辑</p>
+
+        <img src="https://cdn.nlark.com/yuque/0/2022/png/21632762/1660809865501-af7bcc58-be43-4e79-88a0-8d601143442c.png" alt="BMC EXTRST电路">
+        <p class="img-caption">BMC EXTRST 电路 — 长按UID 4秒触发外部复位</p>
+
+        <h2>14. 虚拟媒介功能</h2>
+        <p>AST2500内部集成了一个USB控制器，可以工作在从模式，同时能把远端客户端的一些镜像等媒介虚拟成服务器的USB、光驱、硬盘等设备，以便实现远端挂载的服务器管理。</p>
+
+        <h1>四、附件</h1>
+        <a href="https://www.yuque.com/attachments/yuque/0/2024/pptx/29657337/1723885879117-fadedf0a-fcfb-4c65-8cb1-3057cb325f20.pptx" class="attachment-link">
+            BMC基础知识介绍_0518.pptx
+        </a>
+
+    </div>
+
+    <!-- 看板娘初始化 -->
+    <script src="../../kanbanJS/new/live2d_demo/assets/waifu-tips.js"></script>
+    <script src="../../kanbanJS/new/live2d_demo/assets/live2d.js"></script>
+    <script type="text/javascript">
+        live2d_settings['modelId'] = 1;
+        live2d_settings['modelTexturesId'] = 87;
+        initModel("../../kanbanJS/new/live2d_demo/assets/waifu-tips.json")
+    </script>
+
+    <!-- 特效脚本 -->
+    <script src="../../Effects/backgroundEffect/sakura.js"></script>
+    <script src="../../Effects/mouseSpecialEffects/mouseStar/cursor-meteor.js"></script>
+
+    <!-- 图片错误处理 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('img').forEach(img => {
+                const src = img.getAttribute('src');
+                if (src && src.includes('cdn.nlark.com')) {
+                    img.setAttribute('referrerpolicy', 'no-referrer');
+                    img.onerror = function() {
+                        this.style.display = 'none';
+                        this.insertAdjacentHTML('afterend', '<p class="img-error">⚠️ 图片加载失败，请手动下载并替换为本地路径</p>');
+                    };
+                }
+            });
+        });
+    </script>
+</body>
+</html>

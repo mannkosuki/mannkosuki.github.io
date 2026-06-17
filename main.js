@@ -25,6 +25,9 @@ const articles = [
 
   { title: "Bitbake 构建流程与变量详解", desc: "bitbake 是如何从bb 文件到编译出包的？",
   path: "./article/article7/index.html", cover: "./images/article/homepageArticlePicture/article7/bitbake_compile.png" },
+
+  { title: "BMC基础知识介绍", desc: "基于2500对BMC各个模块基本介绍",
+  path: "./article/article8/index.html", cover: "./images/article/homepageArticlePicture/article8/BMC基础知识.png" },
 ];
 
 // ==============================
