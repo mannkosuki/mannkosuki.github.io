@@ -190,6 +190,7 @@ function initSortToggle() {
 // ==============================
 const musics = [
   { name: "化物語", path: "./music/bakemonogatari.mp3" },
+  { name: "稻香", path: "./music/daoxiang.mp3" },
   { name: "freelucky", path: "./music/freelucky.mp3" },
   { name: "打上花火", path: "./music/hanabiwouchiageru.mp3" },
   { name: "hisTheme", path: "./music/hisTheme.mp3" },
@@ -197,9 +198,11 @@ const musics = [
   { name: "なんでもないや", path: "./music/nanndemonaiya.mp3" },
   { name: "rain", path: "./music/rain.mp3" },
   { name: "Ref_rain", path: "./music/Ref_rain.mp3" },
+  { name: "SacredPlaySecretPlace", path: "./music/SacredPlaySecretPlace.mp3" },
   { name: "summer", path: "./music/summer.mp3" },
   { name: "ヤキモチ", path: "./music/yakimochi.mp3" },
   { name: "ヨスガノソラ メインテーマ", path: "./music/yosuganosora.mp3" },
+  { name: "游园会", path: "./music/youYuanHui.mp3" },
   { name: "指纹", path: "./music/zhiwen.mp3" },
 ];
 
